@@ -18,11 +18,11 @@ The next account-side action after confirmed publication is to sign into Railway
 | --- | --- | --- |
 | Railway | PostgreSQL, named `Postgres` | Production products, prices, pre-bookings and admin sessions |
 | Railway | Website from the GitHub repository | Public catalogue and admin dashboard |
-| Cloudflare R2 | One private bucket, suggested name `ortho-congress-products` | Product images |
+| Railway | One private S3-compatible Bucket (already created by the owner) | Product images |
 
 No Redis or payment service is needed. The initial website has one replica. The development database, storage simulator, test accounts and sample booking must not be copied to production.
 
-The developer will guide creation of an empty Railway project, addition of PostgreSQL, creation of the private R2 bucket and bucket-scoped credentials, and connection of the GitHub website service. Keep the bucket private. Give its API credentials Object Read & Write access restricted to this bucket.
+The developer will guide creation of an empty Railway project, addition of PostgreSQL, connection of the private Railway bucket and its generated credentials, and connection of the GitHub website service. Keep the bucket private and use its generated S3-compatible credentials.
 
 ## 3. Variables — who supplies them and which are private
 
@@ -34,17 +34,17 @@ Enter application variables in the **website service → Variables** panel, not 
 | `PORT` | Supplied by Railway; application also defaults to 3000 | Railway | No; do not set it manually |
 | `NODE_ENV` | `production` is already set in the Docker image | Application configuration | No; do not set it manually |
 | `APP_URL` | Exact HTTPS URL generated for this website, with no extra path | Railway generates the public domain; owner copies it into this setting | No |
-| `S3_ENDPOINT` | HTTPS S3 API endpoint shown in the R2 bucket/account settings | Cloudflare; owner copies it | No |
-| `S3_REGION` | `auto` for R2 | Fixed application setting; owner enters it | No |
-| `S3_BUCKET` | Actual private bucket name | Owner chooses it in Cloudflare | No |
-| `S3_ACCESS_KEY_ID` | Access Key ID from the bucket-scoped R2 credentials | Cloudflare generates it | **Keep private** |
-| `S3_SECRET_ACCESS_KEY` | Secret Access Key from the same R2 credentials | Cloudflare generates it | **Keep private** |
+| `S3_ENDPOINT` | HTTPS S3 endpoint shown in the Railway bucket connection settings | Railway; owner binds or copies it | No |
+| `S3_REGION` | Region shown in the Railway bucket connection settings | Fixed application setting; owner enters it | No |
+| `S3_BUCKET` | Actual private bucket name | Railway supplies the actual bucket name | No |
+| `S3_ACCESS_KEY_ID` | Access Key ID from the Railway bucket credentials | Railway generates it | **Keep private** |
+| `S3_SECRET_ACCESS_KEY` | Secret Access Key from the same Railway bucket credentials | Railway generates it | **Keep private** |
 | `INITIALIZE_CATALOGUE` | `true` for the first catalogue setup; remove after successful verification | Owner enables it when instructed | No |
 | `INITIALIZE_ADMIN` | `true` for the first admin setup; remove after successful verification | Owner enables it when instructed | No |
 | `ADMIN_EMAIL` | Owner's chosen sign-in email | Owner | Personal account information |
 | `ADMIN_PASSWORD` | Unique password of at least 14 characters and at most 72 UTF-8 bytes, saved in a password manager | Owner | **Secret — enter only in Railway; remove after successful admin login** |
 
-Cloudflare credentials may be displayed only once; save them privately before leaving that screen. Never use the localhost/S3RVER development settings on Railway. Never enter production secrets into GitHub files, source code, screenshots or chat.
+Keep the Railway bucket credentials private and use service references where the Variables panel supports them. Never use the localhost/S3RVER development settings on Railway. Never enter production secrets into GitHub files, source code, screenshots or chat.
 
 ## 4. Deployment without terminal commands
 
@@ -78,4 +78,4 @@ The real Railway URL, storage bindings and admin sign-in have not yet been suppl
 
 If a supported Railway account flow requires a one-off task, the prepared commands are `npm run db:migrate`, `npm run catalogue:import`, `npm run catalogue:verify` and `npm run admin:create`. They are for the developer/operator, not instructions for the owner to type. Source imports preserve product identities and use repeatable image object names. Do not restore the development database, which contains localhost image URLs and a marked sample booking.
 
-The optional build CA secret supports this cloud's verified network proxy. Railway normally uses the standard public certificate trust installed in the image; no custom certificate, VPN, TLS bypass or checksum override is required. Package, artifact checksum, TLS and Debian signature verification remain enabled.
+The production Dockerfile uses ordinary Docker instructions supported by Railway. It contains no secret mounts or cloud-specific build certificate settings. Standard public certificate trust is installed in the image; no custom certificate, VPN, TLS bypass or checksum override is required. Package, artifact checksum, TLS and Debian signature verification remain enabled.

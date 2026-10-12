@@ -2,11 +2,11 @@
 
 - Repository: karnamalde11-web/Ortho-Congress-Portal.
 - Target publication branch: main.
-- Current stage: GitHub published; awaiting Railway sign-in confirmation.
+- Current stage: Railway website connected; Dockerfile compatibility fix prepared; next step is website connection settings.
 - GitHub push: completed after owner authorisation. Application commit f543019b2e0a5f5fa916b35cdae9f431fc6b2d38 was verified on main.
-- Railway account/project: not yet confirmed.
-- Production PostgreSQL: not yet created/bound.
-- Production private image bucket: not yet created/bound.
+- Railway account/project: created by owner.
+- Production PostgreSQL: created; website database reference still pending.
+- Production private image bucket: created in Railway; website storage references still pending.
 - Production admin: not yet created.
 - Public URL: not yet supplied.
 - Production catalogue, test booking, mobile images and final health: pending actual deployment.
