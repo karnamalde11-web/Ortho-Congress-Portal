@@ -2,8 +2,8 @@
 
 - Repository: karnamalde11-web/Ortho-Congress-Portal.
 - Target publication branch: main.
-- Current stage: locally committed and awaiting GitHub publication authorisation.
-- GitHub push: not performed.
+- Current stage: GitHub published; awaiting Railway sign-in confirmation.
+- GitHub push: completed after owner authorisation. Application commit f543019b2e0a5f5fa916b35cdae9f431fc6b2d38 was verified on main.
 - Railway account/project: not yet confirmed.
 - Production PostgreSQL: not yet created/bound.
 - Production private image bucket: not yet created/bound.
