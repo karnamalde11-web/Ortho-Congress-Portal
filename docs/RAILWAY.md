@@ -1,0 +1,81 @@
+# Railway deployment — guided, one action at a time
+
+The application, real 220-product catalogue and image corrections are prepared. Local tests do not mean the website is live. GitHub publication, Railway accounts and the real private storage bucket must be completed before public verification.
+
+The owner does not need to write code or run terminal commands. The developer will give one account-side action at a time and wait for confirmation. Do not paste passwords or access keys into chat.
+
+## 1. Publish the code
+
+The completed project is committed locally before publication. `.env`, dependencies and temporary test outputs are excluded. The originals in `catalogue-source/` are included so the production import can reproduce all 220 products and the two approved image corrections.
+
+The owner authorises publication to `karnamalde11-web/Ortho-Congress-Portal`. The developer then pushes the reviewed commit to `main` using the existing GitHub connection, without a forced push, and verifies the remote commit. If access is rejected, use the platform's GitHub connection settings; do not supply a token in chat.
+
+The next account-side action after confirmed publication is to sign into Railway. Follow-up actions will be given separately, not as an entire checklist to perform at once.
+
+## 2. Services to create
+
+| Where | Service | Purpose |
+| --- | --- | --- |
+| Railway | PostgreSQL, named `Postgres` | Production products, prices, pre-bookings and admin sessions |
+| Railway | Website from the GitHub repository | Public catalogue and admin dashboard |
+| Cloudflare R2 | One private bucket, suggested name `ortho-congress-products` | Product images |
+
+No Redis or payment service is needed. The initial website has one replica. The development database, storage simulator, test accounts and sample booking must not be copied to production.
+
+The developer will guide creation of an empty Railway project, addition of PostgreSQL, creation of the private R2 bucket and bucket-scoped credentials, and connection of the GitHub website service. Keep the bucket private. Give its API credentials Object Read & Write access restricted to this bucket.
+
+## 3. Variables — who supplies them and which are private
+
+Enter application variables in the **website service → Variables** panel, not in the PostgreSQL service. The developer will guide each entry separately.
+
+| Name | Value/source | Who creates it? | Private? |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` if the database service is named Postgres; select Railway's database reference | Railway generates the connection details; owner binds the reference to the website | **Yes**, the resolved URL contains database credentials |
+| `PORT` | Supplied by Railway; application also defaults to 3000 | Railway | No; do not set it manually |
+| `NODE_ENV` | `production` is already set in the Docker image | Application configuration | No; do not set it manually |
+| `APP_URL` | Exact HTTPS URL generated for this website, with no extra path | Railway generates the public domain; owner copies it into this setting | No |
+| `S3_ENDPOINT` | HTTPS S3 API endpoint shown in the R2 bucket/account settings | Cloudflare; owner copies it | No |
+| `S3_REGION` | `auto` for R2 | Fixed application setting; owner enters it | No |
+| `S3_BUCKET` | Actual private bucket name | Owner chooses it in Cloudflare | No |
+| `S3_ACCESS_KEY_ID` | Access Key ID from the bucket-scoped R2 credentials | Cloudflare generates it | **Keep private** |
+| `S3_SECRET_ACCESS_KEY` | Secret Access Key from the same R2 credentials | Cloudflare generates it | **Keep private** |
+| `INITIALIZE_CATALOGUE` | `true` for the first catalogue setup; remove after successful verification | Owner enables it when instructed | No |
+| `INITIALIZE_ADMIN` | `true` for the first admin setup; remove after successful verification | Owner enables it when instructed | No |
+| `ADMIN_EMAIL` | Owner's chosen sign-in email | Owner | Personal account information |
+| `ADMIN_PASSWORD` | Unique password of at least 14 characters and at most 72 UTF-8 bytes, saved in a password manager | Owner | **Secret — enter only in Railway; remove after successful admin login** |
+
+Cloudflare credentials may be displayed only once; save them privately before leaving that screen. Never use the localhost/S3RVER development settings on Railway. Never enter production secrets into GitHub files, source code, screenshots or chat.
+
+## 4. Deployment without terminal commands
+
+The Docker image runs `scripts/deploy-start.mjs` automatically:
+
+1. Checks required database, origin and storage settings.
+2. Applies the included Prisma migrations using `prisma migrate deploy`.
+3. If `INITIALIZE_CATALOGUE=true`, imports the source workbook and ZIP, uploads/verifies all 220 image objects and verifies every PostgreSQL product against Excel.
+4. If `INITIALIZE_ADMIN=true`, securely creates the selected admin with a bcrypt password hash. An existing admin is left unchanged, including its password.
+5. Removes setup credentials/flags from the website child process and starts Next.js as a non-root user on Railway's port.
+
+The owner only enters Variables and applies/deploys the changes through Railway's website. No shell is necessary for the normal setup. The `/api/health` check verifies database connectivity, with up to 300 seconds allowed for first startup. If the initial setup needs longer, inspect the actual logs before adjusting the timeout.
+
+After we verify catalogue and admin login, remove `ADMIN_PASSWORD`, `INITIALIZE_ADMIN`, `INITIALIZE_CATALOGUE` and the temporary `ADMIN_EMAIL` setting through the Variables panel. Password removal does not delete the admin account. Subsequent deployments apply migrations without re-importing catalogue prices or replacing passwords. Leaving the catalogue flag enabled would restore the original workbook values on each restart, so remove it before live catalogue editing.
+
+## 5. Public deployment verification
+
+The developer will request only the public website URL, then check:
+
+- HTTP health response with `status: ok` from `/api/health`.
+- Six categories and the real catalogue; filtering, code/name search and quantities.
+- Exact CFA values and the 14 Price on Request products.
+- All images, including TI-049 → TI-050.jpeg and TI-050 → TI-051.jpeg.
+- Mobile layout and image loading at a phone viewport.
+
+For the production test booking, the owner may sign in privately and confirm its reference in the dashboard, or explicitly authorise a separate temporary verification account. The owner will never send their password in chat. The test booking must be labelled SAMPLE ONLY — do not contact or fulfil. Verify its server-priced items and total/subtotal, then mark it cancelled after the check. Finish with another production health check and a physical-phone check by the owner.
+
+The real Railway URL, storage bindings and admin sign-in have not yet been supplied. None of these public deployment checks may be described as completed until actually performed.
+
+## Developer fallback
+
+If a supported Railway account flow requires a one-off task, the prepared commands are `npm run db:migrate`, `npm run catalogue:import`, `npm run catalogue:verify` and `npm run admin:create`. They are for the developer/operator, not instructions for the owner to type. Source imports preserve product identities and use repeatable image object names. Do not restore the development database, which contains localhost image URLs and a marked sample booking.
+
+The optional build CA secret supports this cloud's verified network proxy. Railway normally uses the standard public certificate trust installed in the image; no custom certificate, VPN, TLS bypass or checksum override is required. Package, artifact checksum, TLS and Debian signature verification remain enabled.

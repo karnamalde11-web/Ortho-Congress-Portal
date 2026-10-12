@@ -1,0 +1,72 @@
+{
+  "name": "ortho-congress-portal",
+  "version": "1.0.0",
+  "description": "Neu Micromed / Ajanta orthopaedic exhibition pre-booking application",
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "prisma generate && next build",
+    "start": "next start --hostname 0.0.0.0 -p ${PORT:-3000}",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate deploy",
+    "admin:create": "node scripts/create-admin.mjs",
+    "postinstall": "prisma generate",
+    "test:e2e": "playwright test",
+    "catalogue:import": "tsx scripts/import-catalogue.ts",
+    "catalogue:inspect": "tsx scripts/import-catalogue.ts --dry-run",
+    "lint": "eslint .",
+    "catalogue:verify": "tsx scripts/verify-catalogue.ts",
+    "deploy:start": "node scripts/deploy-start.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karnamalde11-web/Ortho-Congress-Portal.git"
+  },
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1149.0",
+    "@aws-sdk/s3-request-presigner": "^3.1149.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "adm-zip": "^0.6.1",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.7",
+    "exceljs": "^4.4.0",
+    "next": "^16.4.0",
+    "pg": "^8.23.1",
+    "prisma": "^7.10.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sharp": "^0.35.5",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/adm-zip": "^0.5.8",
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/s3rver": "^3.7.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.0",
+    "s3rver": "^3.7.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.4"
+  },
+  "private": true,
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.23",
+    "deepmerge-ts": "^8.0.0",
+    "exceljs": {
+      "uuid": "^11.1.1"
+    },
+    "mysql2": "^3.23.1"
+  }
+}

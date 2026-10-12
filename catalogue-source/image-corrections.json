@@ -1,0 +1,8 @@
+{
+  "sourceZipSha256": "9201f495f8d4981200ad33877dcc1bea590283bb17f037c62b8d7c96e8a9f805",
+  "reason": "User-confirmed intentional filename correction. TI-049 uses TI-050.jpeg; TI-050 uses TI-051.jpeg. TI-051.jpeg does not belong to TI-049.",
+  "corrections": [
+    { "code": "TI-049", "filename": "TI-050.jpeg" },
+    { "code": "TI-050", "filename": "TI-051.jpeg" }
+  ]
+}

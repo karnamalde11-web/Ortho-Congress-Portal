@@ -1,0 +1,81 @@
+generator client {
+ provider = "prisma-client-js"
+ engineType = "client"
+}
+datasource db {
+ provider = "postgresql"
+}
+enum BookingStatus {
+ NEW
+ CONTACTED
+ CONFIRMED
+ CANCELLED
+}
+model Product {
+ id String @id @default(cuid())
+ code String @unique
+ name String
+ category String
+ description String @default("")
+ priceCfa Decimal? @db.Decimal(14, 2)
+ active Boolean @default(true)
+ imageUrl String?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ items BookingItem[]
+ @@index([active, category])
+}
+model Booking {
+ id String @id @default(cuid())
+ requestKey String @unique
+ doctorName String
+ phone String
+ email String?
+ hospital String
+ notes String @default("")
+ consentAt DateTime
+ totalCfa Decimal? @db.Decimal(14, 2)
+ pricedSubtotalCfa Decimal @default(0) @db.Decimal(14, 2)
+ currency String @default("CFA")
+ status BookingStatus @default(NEW)
+ createdAt DateTime @default(now())
+ items BookingItem[]
+ @@index([createdAt])
+}
+model BookingItem {
+ id String @id @default(cuid())
+ bookingId String
+ booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+ productId String
+ product Product @relation(fields: [productId], references: [id])
+ code String
+ name String
+ unitPriceCfa Decimal? @db.Decimal(14, 2)
+ category String @default("")
+ quantity Int
+}
+model Admin {
+ id String @id @default(cuid())
+ email String @unique
+ passwordHash String
+ sessions Session[]
+}
+model Session {
+ tokenHash String @id
+ adminId String
+ admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+ expiresAt DateTime
+ @@index([expiresAt])
+}
+model RateLimit {
+ key String @id
+ count Int
+ windowStart DateTime
+}
+model AuditLog {
+ id String @id @default(cuid())
+ adminId String
+ action String
+ detail String
+ createdAt DateTime @default(now())
+}

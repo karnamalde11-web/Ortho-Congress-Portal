@@ -1,0 +1,21 @@
+{
+  "id": "cmv58hgsk0000eclw3bvu85dl",
+  "doctorName": "Dr Catalogue Verification",
+  "sampleOnly": true,
+  "currency": "CFA",
+  "pricedSubtotalCfa": "16000.00",
+  "totalCfa": null,
+  "items": [
+    {
+      "code": "INS-001",
+      "quantity": 2,
+      "unitPriceCfa": "8000.00"
+    },
+    {
+      "code": "AR-006",
+      "quantity": 1,
+      "unitPriceCfa": null
+    }
+  ],
+  "verifiedInAdmin": true
+}

@@ -1,0 +1,141 @@
+{
+  "intentionalFilenameCorrections": [
+    {
+      "code": "TI-049",
+      "filename": "TI-050.jpeg"
+    },
+    {
+      "code": "TI-050",
+      "filename": "TI-051.jpeg"
+    }
+  ],
+  "beforeCorrections": {
+    "imagesMatched": 219,
+    "missingImages": [
+      "TI-049"
+    ],
+    "unmatchedImages": [
+      "Pictures/Trauma Implants/TI-051.jpeg"
+    ]
+  },
+  "source": {
+    "excel": "catalogue-source/Exhibition Product List.xlsx",
+    "zip": "catalogue-source/Pictures.zip",
+    "excelSha256": "97ebf6e49b321b5ef4a3b2ad0fee4056f8a4a61283414415b7f6a358a0f7fd61",
+    "zipSha256": "9201f495f8d4981200ad33877dcc1bea590283bb17f037c62b8d7c96e8a9f805"
+  },
+  "totalProducts": 220,
+  "totalCategories": 6,
+  "categories": [
+    {
+      "category": "Instruments",
+      "count": 91
+    },
+    {
+      "category": "Arthroscopy",
+      "count": 51
+    },
+    {
+      "category": "Instrument Set",
+      "count": 7
+    },
+    {
+      "category": "Consumables",
+      "count": 14
+    },
+    {
+      "category": "Equipments",
+      "count": 7
+    },
+    {
+      "category": "Trauma Implants",
+      "count": 50
+    }
+  ],
+  "imagesMatched": 220,
+  "missingImages": [],
+  "unmatchedImages": [],
+  "priceOnRequest": [
+    {
+      "code": "AR-006",
+      "name": "Endo Button Continous Loop 40 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-008",
+      "name": "Tibial Attachable Disk with Adjustable Loop 14 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-009",
+      "name": "Tibial Attachable Disk with Adjustable Loop 20 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-016",
+      "name": "Suture Anchor Loaded with Needle 3.5 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-018",
+      "name": "Suture Anchor Loaded with Needle 6.5 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-019",
+      "name": "Syndesmosis Repair System",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-020",
+      "name": "Endo Button",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-021",
+      "name": "Round ABS Disk 14 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-022",
+      "name": "Round ABS Disk 20 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-023",
+      "name": "Anchor Screw 2.8 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-024",
+      "name": "Anchor Screw 3.0 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-025",
+      "name": "Anchor Screw 3.5 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-026",
+      "name": "Anchor Screw 5.0 mm",
+      "category": "Arthroscopy"
+    },
+    {
+      "code": "AR-027",
+      "name": "Anchor Screw 6.5 mm",
+      "category": "Arthroscopy"
+    }
+  ],
+  "duplicateProductCodes": [],
+  "duplicateImageFilenames": [],
+  "ambiguousImageCodes": [],
+  "malformedRows": [],
+  "invalidPrices": [],
+  "invalidImageFiles": [],
+  "nonImageFiles": [],
+  "emptyRows": 0,
+  "importedProducts": 220,
+  "uploadedImages": 220,
+  "storageVerified": true
+}

@@ -1,0 +1,11 @@
+import ExcelJS from "exceljs";
+const workbook = new ExcelJS.Workbook();
+const sheet = workbook.addWorksheet("Instruments");
+sheet.addRow(["Code", "Product Name", "Price CFA"]);
+sheet.addRow(["NM-001", "Example instrument", 1250]);
+sheet.addRow(["NM-002", "Example product with price on request", null]);
+sheet.getRow(1).font = { bold: true };
+sheet.columns.forEach((c) => (c.width = 24));
+sheet.getColumn(2).width = 50;
+sheet.getColumn(3).numFmt = "0.00";
+await workbook.xlsx.writeFile("docs/catalogue-template.xlsx");

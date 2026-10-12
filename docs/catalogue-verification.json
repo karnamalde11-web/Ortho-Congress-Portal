@@ -1,0 +1,14 @@
+{
+  "verifiedAt": "2026-10-12T14:18:07.081Z",
+  "productsVerified": 220,
+  "categoriesVerified": 6,
+  "imageObjectsVerified": 220,
+  "priceOnRequest": 14,
+  "exactSourceFieldsVerified": [
+    "code",
+    "name",
+    "category",
+    "priceCfa"
+  ],
+  "storageMode": "local development object-storage service"
+}
