@@ -11,6 +11,10 @@ export async function GET() {
     >`SELECT COUNT(*) AS count FROM information_schema.columns WHERE table_schema = 'public' AND ((table_name = 'Booking' AND column_name IN ('pricedSubtotalDisplay', 'totalDisplay')) OR (table_name = 'BookingItem' AND column_name IN ('unitPriceDisplay', 'lineSubtotalDisplay')))`;
     if (Number(snapshotColumns[0]?.count) !== 4)
       throw new Error("Migration pending");
+    const [analyticsTables] = await db.$queryRaw<
+      { ready: boolean }[]
+    >`SELECT (to_regclass('public."AnalyticsVisit"') IS NOT NULL AND to_regclass('public."AnalyticsEvent"') IS NOT NULL AND to_regclass('public."AnalyticsConversion"') IS NOT NULL) AS ready`;
+    if (!analyticsTables?.ready) throw new Error("Migration pending");
     const release = process.env.RAILWAY_GIT_COMMIT_SHA || "local";
     const audit = await db.auditLog.findFirst({
       where: { action: "CUSTOMER_DETAILS_MIGRATION" },
@@ -22,6 +26,7 @@ export async function GET() {
       release,
       customerDetailsReady: true,
       currencySnapshotsReady: true,
+      analyticsReady: true,
       existingBookingsPreserved:
         evidence?.release === release && evidence?.preserved === true,
     });

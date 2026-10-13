@@ -23,6 +23,7 @@ try {
     "2025550133",
     "2025550134",
     "2025550139",
+    "2025550180",
   ])
     await db.rateLimit.deleteMany({
       where: {
@@ -78,6 +79,7 @@ try {
     "smoke@example.invalid",
     "smoke-import@example.invalid",
     "smoke-currency@example.invalid",
+    "smoke-analytics@example.invalid",
   ]) {
     await db.rateLimit.deleteMany({
       where: {

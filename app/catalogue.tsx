@@ -1,4 +1,5 @@
 "use client";
+import { useVisitorAnalytics } from "@/lib/use-visitor-analytics";
 import { useRef, useState } from "react";
 import { countries, countryFromName } from "@/lib/countries";
 import { parseQuantityInput, MAX_RESERVATION_QUANTITY } from "@/lib/quantity";
@@ -54,6 +55,7 @@ export default function Catalogue({ products }: { products: Product[] }) {
     email: "",
     notes: "",
   });
+  const analytics = useVisitorAnalytics(customer.country);
   type CustomerField = keyof typeof customer;
   const [touched, setTouched] = useState<
     Partial<Record<CustomerField, boolean>>
@@ -87,6 +89,9 @@ export default function Catalogue({ products }: { products: Product[] }) {
   }
   function changeCustomer(field: CustomerField, value: string) {
     if (submitting.current) return;
+    if (field === "country")
+      analytics.track({ type: "COUNTRY_SELECTED", country: value });
+    else if (value.trim()) analytics.track({ type: "FORM_STARTED" });
     setCustomer((previous) =>
       field === "country"
         ? {
@@ -105,6 +110,10 @@ export default function Catalogue({ products }: { products: Product[] }) {
     if (!parsed) {
       rejectQuantity(id);
       return;
+    }
+    if (parsed.quantity > 0) {
+      analytics.track({ type: "PRODUCT_INTERACTION", productId: id });
+      analytics.track({ type: "QUANTITY_ENTERED", productId: id });
     }
     setQuantities((previous) => ({ ...previous, [id]: parsed.display }));
     setQuantityErrors((previous) => ({ ...previous, [id]: "" }));
@@ -142,6 +151,7 @@ export default function Catalogue({ products }: { products: Product[] }) {
     const requestKey = key ?? crypto.randomUUID();
     setKey(requestKey);
     try {
+      await analytics.beforeBooking();
       const r = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -263,6 +273,8 @@ export default function Catalogue({ products }: { products: Product[] }) {
           placeholder="Search name or product code"
           value={search}
           onChange={(e) => {
+            if (e.target.value.trim())
+              analytics.track({ type: "PRODUCT_INTERACTION" });
             setSearch(e.target.value);
             setLimit(24);
           }}
@@ -271,6 +283,12 @@ export default function Catalogue({ products }: { products: Product[] }) {
           aria-label="Category"
           value={category}
           onChange={(e) => {
+            analytics.track({ type: "PRODUCT_INTERACTION" });
+            if (e.target.value)
+              analytics.track({
+                type: "CATEGORY_VIEWED",
+                category: e.target.value,
+              });
             setCategory(e.target.value);
             setLimit(24);
           }}
@@ -293,7 +311,16 @@ export default function Catalogue({ products }: { products: Product[] }) {
             </div>
           )}
           {filtered.slice(0, limit).map((p) => (
-            <article className="card" key={p.id}>
+            <article
+              className="card"
+              key={p.id}
+              onPointerDown={() =>
+                analytics.track({
+                  type: "PRODUCT_INTERACTION",
+                  productId: p.id,
+                })
+              }
+            >
               {p.hasImage ? (
                 <img
                   loading="lazy"
@@ -320,6 +347,12 @@ export default function Catalogue({ products }: { products: Product[] }) {
               <label>
                 Quantity to reserve
                 <input
+                  onFocus={() =>
+                    analytics.track({
+                      type: "PRODUCT_INTERACTION",
+                      productId: p.id,
+                    })
+                  }
                   type="number"
                   aria-label="Quantity to reserve"
                   inputMode="numeric"

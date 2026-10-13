@@ -1,3 +1,4 @@
+import { recordAnalyticsSubmission } from "@/lib/analytics-server";
 import { ZodError } from "zod";
 import { normalizeWhatsApp } from "@/lib/phone";
 import { bookingReference } from "@/lib/booking-reference";
@@ -82,6 +83,10 @@ export async function POST(req: Request) {
         include: { items: true },
       });
     });
+    await Promise.race([
+      recordAnalyticsSubmission(booking),
+      new Promise<void>((resolve) => setTimeout(resolve, 150)),
+    ]);
     return NextResponse.json(
       {
         id: booking.id,

@@ -37,6 +37,9 @@ export default async function Admin({
           <button>Sign out</button>
         </form>
       </div>
+      <nav className="my-4">
+        <a href="/admin/analytics">Visitor analytics</a>
+      </nav>
       <p className="my-4">
         {count} pre-bookings · {products} products
       </p>

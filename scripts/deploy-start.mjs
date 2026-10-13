@@ -1,7 +1,9 @@
+import { startAnalyticsRetention } from "./analytics-retention.mjs";
 import { spawn } from "node:child_process";
 import { productionSetup } from "./production-setup.mjs";
 try {
   await productionSetup();
+  const stopRetention = startAnalyticsRetention();
   // Setup credentials must not be inherited by the web application.
   const runtimeEnv = { ...process.env, NODE_ENV: "production" };
   for (const name of [
@@ -29,10 +31,12 @@ try {
   for (const signal of ["SIGTERM", "SIGINT"])
     process.on(signal, () => server.kill(signal));
   server.on("error", () => {
+    stopRetention();
     console.error("Application startup failed.");
     process.exitCode = 1;
   });
   server.on("exit", (code, signal) => {
+    stopRetention();
     process.exitCode = code ?? (signal ? 1 : 0);
   });
 } catch (error) {

@@ -79,6 +79,48 @@ describe.skipIf(!url)("PostgreSQL migration constraints", () => {
       expect((await client.query('SELECT * FROM "Product"')).rows[0]).toEqual(
         beforeProduct,
       );
+      const beforeAnalyticsBooking = (
+        await client.query('SELECT * FROM "Booking"')
+      ).rows[0];
+      const beforeAnalyticsItem = (
+        await client.query('SELECT * FROM "BookingItem"')
+      ).rows[0];
+      const analyticsMigration = await readFile(
+        "prisma/migrations/20261013153000_anonymous_analytics/migration.sql",
+        "utf8",
+      );
+      await client.query(analyticsMigration.replace(/^BEGIN;|^COMMIT;/gm, ""));
+      expect((await client.query('SELECT * FROM "Booking"')).rows[0]).toEqual(
+        beforeAnalyticsBooking,
+      );
+      expect(
+        (await client.query('SELECT * FROM "BookingItem"')).rows[0],
+      ).toEqual(beforeAnalyticsItem);
+      await client.query(
+        `INSERT INTO "AnalyticsVisit" (id,"visitorHash",device) VALUES ('11111111-1111-4111-8111-111111111111','${"a".repeat(64)}','mobile')`,
+      );
+      await client.query(
+        `INSERT INTO "AnalyticsEvent" (id,"visitId",type,key) VALUES ('analytics-event','11111111-1111-4111-8111-111111111111','OPENED','root')`,
+      );
+      await client.query(
+        `INSERT INTO "AnalyticsConversion" ("bookingId","visitId","submittedAt") VALUES ('legacy-booking','11111111-1111-4111-8111-111111111111',NOW())`,
+      );
+      await client.query(
+        `DELETE FROM "AnalyticsVisit" WHERE id='11111111-1111-4111-8111-111111111111'`,
+      );
+      expect((await client.query('SELECT * FROM "Booking"')).rows[0]).toEqual(
+        beforeAnalyticsBooking,
+      );
+      expect(
+        (await client.query('SELECT * FROM "BookingItem"')).rows[0],
+      ).toEqual(beforeAnalyticsItem);
+      expect(
+        (await client.query('SELECT * FROM "AnalyticsEvent"')).rows,
+      ).toHaveLength(0);
+      expect(
+        (await client.query('SELECT "visitId" FROM "AnalyticsConversion"'))
+          .rows[0].visitId,
+      ).toBeNull();
     } finally {
       await client.query("ROLLBACK");
       await client.end();

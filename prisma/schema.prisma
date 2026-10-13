@@ -48,6 +48,7 @@ model Booking {
  status BookingStatus @default(NEW)
  createdAt DateTime @default(now())
  items BookingItem[]
+ analyticsConversion AnalyticsConversion?
  @@index([createdAt])
 }
 model BookingItem {
@@ -88,4 +89,47 @@ model AuditLog {
  action String
  detail String
  createdAt DateTime @default(now())
+}
+model AnalyticsVisit {
+ id String @id @default(uuid()) @db.Uuid
+ visitorHash String @db.Char(64)
+ openedAt DateTime @default(now())
+ lastSeenAt DateTime @default(now())
+ productInteractionAt DateTime?
+ quantityEnteredAt DateTime?
+ formStartedAt DateTime?
+ submittedAt DateTime?
+ selectedCountry String @default("Senegal")
+ device String
+ referrerDomain String?
+ utmSource String?
+ utmMedium String?
+ utmCampaign String?
+ events AnalyticsEvent[]
+ conversions AnalyticsConversion[]
+ @@index([openedAt])
+ @@index([visitorHash, openedAt])
+ @@index([lastSeenAt])
+}
+model AnalyticsEvent {
+ id String @id @default(cuid())
+ visitId String @db.Uuid
+ visit AnalyticsVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+ type String
+ key String
+ occurredAt DateTime @default(now())
+ productCode String?
+ category String?
+ country String?
+ @@unique([visitId, type, key])
+ @@index([occurredAt, type])
+}
+model AnalyticsConversion {
+ bookingId String @id
+ booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+ visitId String? @db.Uuid
+ visit AnalyticsVisit? @relation(fields: [visitId], references: [id], onDelete: SetNull)
+ submittedAt DateTime
+ @@index([visitId])
+ @@index([submittedAt])
 }

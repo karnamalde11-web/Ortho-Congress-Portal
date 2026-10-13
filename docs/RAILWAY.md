@@ -89,3 +89,11 @@ Deployment captures existing booking and booking-item IDs before applying migrat
 References display as `NM-<submission year>-<complete original booking ID>` in the confirmation and dashboard. This retains all original IDs and does not invent a sequential booking number.
 
 For this update, push the tested commit normally to `main`; Railway's existing GitHub integration builds and runs the migration automatically. No new service, environment variable or manually entered database command is required. Check `/api/health` for the new release and both readiness/preservation flags, then verify the form and images at 375, 390 and 430 pixels. Sign in privately at `/admin` to review the labelled production test booking and mark it cancelled after verification. Do not share the sign-in password with the developer.
+
+## First-party analytics update (13 October 2026)
+
+The existing website and PostgreSQL services handle analytics; no new service or environment variable is needed. The additive `20261013153000_anonymous_analytics` migration creates three analytics tables without modifying existing bookings or catalogue rows. Normal deployment startup applies it and verifies existing booking/item IDs remain present.
+
+After the tested update is pushed to `main`, Railway deploys automatically. Verify `/api/health` reports the new release, `analyticsReady: true` and `existingBookingsPreserved: true`. Verify first-party tracking cookies are issued only after the public tracking transaction succeeds, refreshes reuse the session, and anonymous access to `/admin/analytics` redirects to login. The owner can sign in privately and use **Visitor analytics** in the admin dashboard. No admin password should be shared.
+
+Analytics begins with this deployment and cannot reconstruct earlier anonymous visits. The privacy page provides an opt-out; daily cleanup removes old anonymous visits after 90 days while retaining real pre-bookings. See [analytics definitions and privacy limits](ANALYTICS.md).
