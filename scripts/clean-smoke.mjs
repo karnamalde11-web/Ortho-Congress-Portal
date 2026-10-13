@@ -16,7 +16,13 @@ const db = new PrismaClient({
 try {
   const admins = await db.admin.findMany({
     where: {
-      email: { in: ["smoke@example.invalid", "smoke-import@example.invalid"] },
+      email: {
+        in: [
+          "smoke@example.invalid",
+          "smoke-import@example.invalid",
+          "smoke-currency@example.invalid",
+        ],
+      },
     },
   });
   await db.$transaction(async (tx) => {
@@ -32,6 +38,12 @@ try {
             "Dr Retry Test",
             "Dr UX Retry",
             "Dr UX POR",
+            "Dr Currency CFA",
+            "Dr Currency USD",
+            "Dr Currency Mixed",
+            "Dr Currency POR CFA",
+            "Dr Currency POR USD",
+            "Dr Currency Stale",
           ],
         },
         hospital: "Smoke test clinic",

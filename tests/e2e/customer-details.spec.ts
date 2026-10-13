@@ -1,3 +1,5 @@
+import { COUNTRY_PRICING_POLICY } from "../../lib/pricing-policy";
+import { publicProducts } from "./public-products";
 import { test, expect } from "@playwright/test";
 for (const width of [375, 390, 430]) {
   test(`required details, specialty, full WhatsApp and confirmation at ${width}px`, async ({
@@ -26,6 +28,16 @@ for (const width of [375, 390, 430]) {
       .fill("771234567");
     await page.getByLabel("Search products").fill("SMOKE-001");
     await page.getByLabel("Quantity to reserve").fill("1");
+    await page.getByLabel("Country *", { exact: true }).selectOption("India");
+    await expect(page.locator("#pre-booking")).toContainText(
+      "Priced subtotal: $20",
+    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.getByLabel("Country *", { exact: true }).selectOption("Senegal");
     await expect(submit).toBeDisabled(); // Other requires its own description.
     await page
       .getByLabel("Your specialty *", { exact: true })
@@ -102,12 +114,12 @@ test("server rejects missing required fields and idempotent retries keep one boo
 }) => {
   await page.goto("/");
   await page.getByLabel("Search products").fill("SMOKE-001");
-  const html = await page.content();
-  const productId = html.match(
-    /\\"id\\":\\"([^"\\]+)\\",\\"code\\":\\"SMOKE-001/,
-  )?.[1];
-  expect(productId).toBeTruthy();
+  const product = (await publicProducts(page)).find(
+    (p) => p.code === "SMOKE-001",
+  )!;
+  expect(product).toBeTruthy();
   const payload = {
+    pricingPolicy: COUNTRY_PRICING_POLICY,
     requestKey: crypto.randomUUID(),
     doctorName: "Dr Retry Test",
     specialty: "Distributor",
@@ -116,7 +128,13 @@ test("server rejects missing required fields and idempotent retries keep one boo
     country: "Senegal",
     phoneCountryCode: "+1",
     phoneNationalNumber: "2025550123",
-    items: [{ productId, quantity: 1 }],
+    items: [
+      {
+        productId: product.id,
+        pricingVersion: product.pricingVersion,
+        quantity: 1,
+      },
+    ],
   };
   for (const field of [
     "doctorName",

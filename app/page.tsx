@@ -13,6 +13,7 @@ export default async function Home() {
       description: true,
       priceCfa: true,
       imageUrl: true,
+      updatedAt: true,
     },
   });
   return (
@@ -22,13 +23,15 @@ export default async function Home() {
       </p>
       <h1>NM Ortho Pricing &amp; Pre-Booking Portal</h1>
       <p className="my-3 max-w-2xl">
-        Select the products and quantities you would like to reserve for the congress. No payment is required at this stage.
+        Select the products and quantities you would like to reserve for the
+        congress. No payment is required at this stage.
       </p>
       <Catalogue
-        products={products.map(({ imageUrl, ...p }) => ({
+        products={products.map(({ imageUrl, updatedAt, ...p }) => ({
           ...p,
           priceCfa: p.priceCfa?.toFixed(2) ?? null,
           hasImage: !!imageUrl,
+          pricingVersion: updatedAt.toISOString(),
         }))}
       />
     </>

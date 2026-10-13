@@ -2,13 +2,23 @@
 import { useRef, useState } from "react";
 import { countries, countryFromName } from "@/lib/countries";
 import { parseQuantityInput, MAX_RESERVATION_QUANTITY } from "@/lib/quantity";
-import { bookingTotals } from "@/lib/booking-pricing";
-import { customerSchema, specialties, money } from "@/lib/validation";
+import { COUNTRY_PRICING_POLICY } from "@/lib/pricing-policy";
+import {
+  currencyForCountry,
+  sellingPrice,
+  displayMoney,
+  type DisplayCurrency,
+} from "@/lib/currency";
+import { displayPricing } from "@/lib/booking-pricing";
+import { customerSchema, specialties } from "@/lib/validation";
 type Confirmation = {
   reference: string;
   customerName: string;
   selectedProductCount: number;
   hasPriceOnRequest: boolean;
+  currency: DisplayCurrency;
+  pricedSubtotalDisplay: string;
+  totalDisplay: string | null;
 };
 type Product = {
   id: string;
@@ -18,6 +28,7 @@ type Product = {
   description: string;
   priceCfa: string | null;
   hasImage: boolean;
+  pricingVersion: string;
 };
 export default function Catalogue({ products }: { products: Product[] }) {
   const [limit, setLimit] = useState(24);
@@ -112,13 +123,15 @@ export default function Catalogue({ products }: { products: Product[] }) {
       `${p.name} ${p.code}`.toLowerCase().includes(search.toLowerCase()),
   );
   const selected = products.filter((p) => Number(quantities[p.id] || 0) > 0);
-  const totals = bookingTotals(
+  const displayCurrency = currencyForCountry(customer.country);
+  const totals = displayPricing(
     selected.map((p) => ({
       unitPriceCfa: p.priceCfa,
       quantity: Number(quantities[p.id] || 0),
     })),
+    displayCurrency,
   );
-  const total = totals.totalCfa;
+  const total = totals.totalDisplay;
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (submitting.current || !customerValid || !selected.length) return;
@@ -134,9 +147,11 @@ export default function Catalogue({ products }: { products: Product[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           requestKey,
+          pricingPolicy: COUNTRY_PRICING_POLICY,
           ...customer,
           items: selected.map((p) => ({
             productId: p.id,
+            pricingVersion: p.pricingVersion,
             quantity: Number(quantities[p.id] || 0),
           })),
         }),
@@ -184,12 +199,22 @@ export default function Catalogue({ products }: { products: Product[] }) {
             <dt className="font-bold">Selected products</dt>
             <dd>{confirmation.selectedProductCount}</dd>
           </div>
+
           <div>
             <dt className="font-bold">Price on Request items</dt>
             <dd>
               {confirmation.hasPriceOnRequest
                 ? "Yes — final prices will be confirmed by our team."
                 : "No"}
+            </dd>
+          </div>
+          <div>
+            <dt className="font-bold">Priced subtotal</dt>
+            <dd>
+              {displayMoney(
+                confirmation.pricedSubtotalDisplay,
+                confirmation.currency,
+              )}
             </dd>
           </div>
         </dl>
@@ -204,6 +229,34 @@ export default function Catalogue({ products }: { products: Product[] }) {
     );
   return (
     <>
+      <div id="catalogue-country" className="my-6 max-w-md scroll-mt-6">
+        <label>
+          Country *
+          <select
+            name="country"
+            disabled={busy}
+            aria-label="Country *"
+            required
+            autoComplete="country-name"
+            value={customer.country}
+            aria-invalid={!!fieldError("country")}
+            aria-describedby={
+              fieldError("country") ? "country-error" : undefined
+            }
+            onChange={(e) => changeCustomer("country", e.target.value)}
+          >
+            <option value="" disabled>
+              Select your country
+            </option>
+            {countries.map((country) => (
+              <option key={country.code} value={country.name}>
+                {country.name}
+              </option>
+            ))}
+          </select>
+          {feedback("country")}
+        </label>
+      </div>
       <div className="my-6 grid gap-3 sm:grid-cols-2">
         <input
           aria-label="Search products"
@@ -258,7 +311,12 @@ export default function Catalogue({ products }: { products: Product[] }) {
               </p>
               <h2>{p.name}</h2>
               <p className="my-2 text-sm">{p.description}</p>
-              <p className="font-bold">{money(p.priceCfa)}</p>
+              <p className="font-bold">
+                {displayMoney(
+                  sellingPrice(p.priceCfa, displayCurrency),
+                  displayCurrency,
+                )}
+              </p>
               <label>
                 Quantity to reserve
                 <input
@@ -317,20 +375,19 @@ export default function Catalogue({ products }: { products: Product[] }) {
         </section>
         <aside id="pre-booking" className="card min-w-0 h-fit scroll-mt-6">
           <h2>Your pre-booking</h2>
+          <p className="mt-2 text-sm">
+            Country: {customer.country} ·{" "}
+            <a href="#catalogue-country">Change country</a>
+          </p>
           {selected.map((p) => (
             <p className="my-2" key={p.id}>
               {p.name} × {quantities[p.id]}
             </p>
           ))}
           <p className="my-4 font-bold">
-            {total === null ? (
-              <>
-                Priced subtotal: {money(totals.pricedSubtotalCfa)} · Full total
-                on request
-              </>
-            ) : (
-              <>Estimated total: {money(total)}</>
-            )}
+            Priced subtotal:{" "}
+            {displayMoney(totals.pricedSubtotalDisplay, displayCurrency)}
+            {total === null && " · Full total on request"}
           </p>
           <p className="text-sm">
             Final availability and commercial terms will be confirmed by our
@@ -451,31 +508,7 @@ export default function Catalogue({ products }: { products: Product[] }) {
                 />
                 {feedback("city")}
               </label>
-              <label>
-                Country *
-                <select
-                  name="country"
-                  aria-label="Country *"
-                  required
-                  autoComplete="country-name"
-                  value={customer.country}
-                  aria-invalid={!!fieldError("country")}
-                  aria-describedby={
-                    fieldError("country") ? "country-error" : undefined
-                  }
-                  onChange={(e) => changeCustomer("country", e.target.value)}
-                >
-                  <option value="" disabled>
-                    Select your country
-                  </option>
-                  {countries.map((country) => (
-                    <option key={country.code} value={country.name}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-                {feedback("country")}
-              </label>
+
               <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-3">
                 <label>
                   <span className="block min-h-15 text-sm leading-5">
@@ -619,7 +652,8 @@ export default function Catalogue({ products }: { products: Product[] }) {
           href="#pre-booking"
           className="fixed inset-x-4 bottom-4 z-10 rounded-xl bg-teal-800 p-4 text-center font-bold text-white shadow-lg lg:hidden"
         >
-          Review Pre-Booking · {selected.length} products · {money(total)}
+          Review Pre-Booking · {selected.length} products ·{" "}
+          {displayMoney(total, displayCurrency)}
         </a>
       )}
     </>

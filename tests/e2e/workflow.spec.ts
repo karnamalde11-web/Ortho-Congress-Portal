@@ -1,3 +1,4 @@
+import { COUNTRY_PRICING_POLICY } from "../../lib/pricing-policy";
 import { test, expect } from "@playwright/test";
 test("mobile catalogue, real pre-booking, secure admin and central status", async ({
   page,
@@ -49,6 +50,8 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
     .locator("article")
     .filter({ hasText: "Dr Smoke Test" })
     .first();
+  await expect(booking).toContainText("$40");
+  await expect(booking).toContainText("Display CurrencyUSD");
   await expect(booking).toContainText("24,690 CFA");
   await expect(booking).toContainText("SMOKE-001");
   await booking.getByLabel("Booking status").selectOption("CONFIRMED");
@@ -70,6 +73,7 @@ test("rejects forged prices, cross-origin submissions and unauthenticated import
   const r = await request.post("/api/bookings", {
     headers: { Origin: "http://localhost:3000" },
     data: {
+      pricingPolicy: COUNTRY_PRICING_POLICY,
       requestKey: crypto.randomUUID(),
       doctorName: "Doctor",
       phoneCountryCode: "+221",
@@ -78,7 +82,14 @@ test("rejects forged prices, cross-origin submissions and unauthenticated import
       city: "Dakar",
       country: "Senegal",
       hospital: "Clinic",
-      items: [{ productId: "forged", quantity: 1, priceCfa: 1 }],
+      items: [
+        {
+          productId: "forged",
+          pricingVersion: "2026-10-13T00:00:00.000Z",
+          quantity: 1,
+          priceCfa: 1,
+        },
+      ],
     },
   });
   expect(r.status()).toBe(400);

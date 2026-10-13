@@ -43,6 +43,8 @@ model Booking {
  totalCfa Decimal? @db.Decimal(14, 2)
  pricedSubtotalCfa Decimal @default(0) @db.Decimal(14, 2)
  currency String @default("CFA")
+ pricedSubtotalDisplay Decimal? @db.Decimal(14, 2)
+ totalDisplay Decimal? @db.Decimal(14, 2)
  status BookingStatus @default(NEW)
  createdAt DateTime @default(now())
  items BookingItem[]
@@ -57,6 +59,8 @@ model BookingItem {
  code String
  name String
  unitPriceCfa Decimal? @db.Decimal(14, 2)
+ unitPriceDisplay Decimal? @db.Decimal(14, 2)
+ lineSubtotalDisplay Decimal? @db.Decimal(14, 2)
  category String @default("")
  quantity Int
 }

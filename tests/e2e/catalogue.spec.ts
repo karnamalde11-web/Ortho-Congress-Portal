@@ -100,7 +100,8 @@ test("real catalogue, categories, CFA prices, corrected images and a central sam
   await expect(sample).toContainText("INS-001");
   await expect(sample).toContainText("AR-006");
   await expect(sample).toContainText("Price on Request");
-  await expect(sample).toContainText("Priced subtotal: 16,000 CFA");
+  await expect(sample).toContainText("Priced subtotal: $26");
+  await expect(sample).toContainText("Display CurrencyUSD");
   await expect(sample).toContainText("SAMPLE ONLY");
   await writeFile(
     "/tmp/ortho-new-sample-prebooking.json",
@@ -109,7 +110,8 @@ test("real catalogue, categories, CFA prices, corrected images and a central sam
         id,
         doctorName: "Dr Catalogue Verification",
         sampleOnly: true,
-        currency: "CFA",
+        currency: "USD",
+        pricedSubtotalDisplay: "26.00",
         pricedSubtotalCfa: "16000.00",
         totalCfa: null,
         items: [

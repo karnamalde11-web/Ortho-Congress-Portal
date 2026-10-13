@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 // Explicitly opt in with a disposable database; never point this at production.
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("PostgreSQL migration constraints", () => {
-  it("preserves every legacy booking value and item through the additive customer migration", async () => {
+  it("preserves every legacy booking value, item and product through both additive migrations", async () => {
     const client = new Client({ connectionString: url });
     await client.connect();
     try {
@@ -52,6 +52,79 @@ describe.skipIf(!url)("PostgreSQL migration constraints", () => {
       expect(
         (await client.query('SELECT * FROM "BookingItem"')).rows[0],
       ).toEqual(beforeItem);
+      await client.query(
+        `UPDATE "Booking" SET country='India' WHERE id='legacy-booking'`,
+      );
+      const beforeCurrency = (await client.query('SELECT * FROM "Booking"'))
+        .rows[0];
+      const beforeProduct = (await client.query('SELECT * FROM "Product"'))
+        .rows[0];
+      const currencyMigration = await readFile(
+        "prisma/migrations/20261013140000_display_price_snapshots/migration.sql",
+        "utf8",
+      );
+      await client.query(currencyMigration.replace(/^BEGIN;|^COMMIT;/gm, ""));
+      const finalBooking = (await client.query('SELECT * FROM "Booking"'))
+        .rows[0];
+      expect(finalBooking).toMatchObject(beforeCurrency);
+      expect(finalBooking.currency).toBe("CFA");
+      expect(finalBooking.country).toBe("India");
+      expect(finalBooking.pricedSubtotalDisplay).toBeNull();
+      expect(finalBooking.totalDisplay).toBeNull();
+      const finalItem = (await client.query('SELECT * FROM "BookingItem"'))
+        .rows[0];
+      expect(finalItem).toMatchObject(beforeItem);
+      expect(finalItem.unitPriceDisplay).toBeNull();
+      expect(finalItem.lineSubtotalDisplay).toBeNull();
+      expect((await client.query('SELECT * FROM "Product"')).rows[0]).toEqual(
+        beforeProduct,
+      );
+    } finally {
+      await client.query("ROLLBACK");
+      await client.end();
+    }
+  });
+  it("retains saved USD and CFA item prices after the catalogue price changes", async () => {
+    const client = new Client({ connectionString: url });
+    await client.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO "Product" (id,code,name,category,"priceCfa","updatedAt") VALUES ('snapshot-product','SNAPSHOT','Test','Test',8000,NOW())`,
+      );
+      await client.query(
+        `INSERT INTO "Booking" (id,"requestKey","doctorName",phone,hospital,"consentAt",country,currency,"totalCfa","pricedSubtotalCfa","pricedSubtotalDisplay","totalDisplay") VALUES ('snapshot-booking','snapshot-request','Doctor','1234567890','Clinic',NOW(),'India','USD',24000,24000,39,39)`,
+      );
+      await client.query(
+        `INSERT INTO "BookingItem" (id,"bookingId","productId",code,name,"unitPriceCfa",quantity,"unitPriceDisplay","lineSubtotalDisplay") VALUES ('snapshot-item','snapshot-booking','snapshot-product','SNAPSHOT','Test',8000,3,13,39)`,
+      );
+      await client.query(
+        `UPDATE "Product" SET "priceCfa"=9000 WHERE id='snapshot-product'`,
+      );
+      const item = (
+        await client.query(
+          `SELECT "unitPriceCfa","unitPriceDisplay","lineSubtotalDisplay",quantity FROM "BookingItem" WHERE id='snapshot-item'`,
+        )
+      ).rows[0];
+      expect(item).toEqual({
+        unitPriceCfa: "8000.00",
+        unitPriceDisplay: "13.00",
+        lineSubtotalDisplay: "39.00",
+        quantity: 3,
+      });
+      const booking = (
+        await client.query(
+          `SELECT country,currency,"totalCfa","pricedSubtotalCfa","pricedSubtotalDisplay","totalDisplay" FROM "Booking" WHERE id='snapshot-booking'`,
+        )
+      ).rows[0];
+      expect(booking).toEqual({
+        country: "India",
+        currency: "USD",
+        totalCfa: "24000.00",
+        pricedSubtotalCfa: "24000.00",
+        pricedSubtotalDisplay: "39.00",
+        totalDisplay: "39.00",
+      });
     } finally {
       await client.query("ROLLBACK");
       await client.end();
@@ -81,6 +154,8 @@ describe.skipIf(!url)("PostgreSQL migration constraints", () => {
       for (const sql of [
         `UPDATE "Product" SET "priceCfa"=-1 WHERE id='test-product'`,
         `UPDATE "BookingItem" SET quantity=0 WHERE id='test-item'`,
+        `UPDATE "BookingItem" SET "unitPriceDisplay"=-1 WHERE id='test-item'`,
+        `UPDATE "Booking" SET "pricedSubtotalDisplay"=-1 WHERE id='test-booking'`,
         `INSERT INTO "Booking" (id,"requestKey","doctorName",phone,hospital,"consentAt","totalCfa") VALUES ('duplicate','test-request','Doctor','1234567890','Clinic',NOW(),25000)`,
       ]) {
         await client.query("SAVEPOINT invalid");

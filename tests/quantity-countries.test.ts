@@ -1,3 +1,4 @@
+import { COUNTRY_PRICING_POLICY } from "../lib/pricing-policy";
 import { describe, expect, it } from "vitest";
 import { countries, countryFromName } from "../lib/countries";
 import { parseQuantityInput } from "../lib/quantity";
@@ -57,6 +58,7 @@ describe("standardized countries and independent WhatsApp codes", () => {
   });
   it("accepts a valid manually overridden WhatsApp number and rejects arbitrary country names", () => {
     const booking = {
+      pricingPolicy: COUNTRY_PRICING_POLICY,
       requestKey: crypto.randomUUID(),
       doctorName: "Dr Test",
       specialty: "Trauma Surgeon",
@@ -65,7 +67,13 @@ describe("standardized countries and independent WhatsApp codes", () => {
       country: "Senegal",
       phoneCountryCode: "+1",
       phoneNationalNumber: "2025550123",
-      items: [{ productId: "p1", quantity: 1 }],
+      items: [
+        {
+          productId: "p1",
+          pricingVersion: "2026-10-13T00:00:00.000Z",
+          quantity: 1,
+        },
+      ],
     };
     expect(bookingSchema.safeParse(booking).success).toBe(true);
     expect(

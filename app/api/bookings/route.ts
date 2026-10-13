@@ -1,7 +1,8 @@
 import { ZodError } from "zod";
 import { normalizeWhatsApp } from "@/lib/phone";
 import { bookingReference } from "@/lib/booking-reference";
-import { bookingTotals } from "@/lib/booking-pricing";
+import { currencyForCountry, recordedPricing } from "@/lib/currency";
+import { bookingTotals, displayPricing } from "@/lib/booking-pricing";
 import { readLimitedBody } from "@/lib/body";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -37,6 +38,10 @@ export async function POST(req: Request) {
         );
       const items = data.items.map((i) => {
         const p = products.find((p) => p.id === i.productId)!;
+        if (i.pricingVersion !== p.updatedAt.toISOString())
+          throw new Error(
+            "Product details changed. Please refresh the catalogue and review your pre-booking.",
+          );
         return {
           productId: p.id,
           code: p.code,
@@ -47,6 +52,8 @@ export async function POST(req: Request) {
         };
       });
       const totals = bookingTotals(items);
+      const currency = currencyForCountry(data.country);
+      const display = displayPricing(items, currency);
       return tx.booking.create({
         data: {
           requestKey: data.requestKey,
@@ -62,8 +69,15 @@ export async function POST(req: Request) {
           notes: data.notes,
           consentAt: new Date(),
           ...totals,
-          currency: "CFA",
-          items: { create: items },
+          currency,
+          pricedSubtotalDisplay: display.pricedSubtotalDisplay,
+          totalDisplay: display.totalDisplay,
+          items: {
+            create: items.map((item, index) => ({
+              ...item,
+              ...display.items[index],
+            })),
+          },
         },
         include: { items: true },
       });
@@ -74,11 +88,27 @@ export async function POST(req: Request) {
         reference: bookingReference(booking.id, booking.createdAt),
         customerName: booking.doctorName,
         selectedProductCount: booking.items.length,
+        ...recordedPricing(booking),
         hasPriceOnRequest: booking.items.some((i) => i.unitPriceCfa === null),
       },
       { status: 201 },
     );
   } catch (e) {
+    if (
+      e instanceof ZodError &&
+      e.issues.some(
+        (issue) =>
+          issue.path.includes("pricingPolicy") ||
+          issue.path.includes("pricingVersion"),
+      )
+    )
+      return NextResponse.json(
+        {
+          error:
+            "Please refresh the catalogue and review your pre-booking before submitting.",
+        },
+        { status: 400 },
+      );
     if (e instanceof ZodError)
       return NextResponse.json(
         {
@@ -93,7 +123,8 @@ export async function POST(req: Request) {
         error:
           msg.includes("unavailable") ||
           msg.includes("Too many") ||
-          msg.includes("exceeds")
+          msg.includes("exceeds") ||
+          msg.includes("Product details changed")
             ? msg
             : "Unable to submit. Refresh the catalogue and check your required details and WhatsApp number.",
       },

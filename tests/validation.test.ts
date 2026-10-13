@@ -1,9 +1,11 @@
+import { COUNTRY_PRICING_POLICY } from "../lib/pricing-policy";
 import { describe, it, expect } from "vitest";
 import { bookingSchema, parseCfaPrice } from "../lib/validation";
 import { parseExcel, parseImages } from "../lib/import";
 import ExcelJS from "exceljs";
 import AdmZip from "adm-zip";
 const valid = {
+  pricingPolicy: COUNTRY_PRICING_POLICY,
   requestKey: "41fe6367-5da7-483e-a96b-91aba60c5fe3",
   doctorName: "Dr Test",
   phoneCountryCode: "+221",
@@ -12,7 +14,13 @@ const valid = {
   city: "Dakar",
   country: "Senegal",
   hospital: "Clinic",
-  items: [{ productId: "p1", quantity: 2 }],
+  items: [
+    {
+      productId: "p1",
+      pricingVersion: "2026-10-13T00:00:00.000Z",
+      quantity: 2,
+    },
+  ],
 };
 describe("booking validation", () => {
   it("accepts a legitimate pre-booking", () =>
@@ -47,13 +55,29 @@ describe("booking validation", () => {
     expect(
       bookingSchema.safeParse({
         ...valid,
-        items: [{ productId: "p1", quantity: 2, price: 1 }],
+        items: [
+          {
+            productId: "p1",
+            pricingVersion: "2026-10-13T00:00:00.000Z",
+            quantity: 2,
+            price: 1,
+          },
+        ],
       }).success,
     ).toBe(false));
   it("rejects duplicates, invalid quantities and missing required details", () => {
     for (const data of [
       { ...valid, items: [valid.items[0], valid.items[0]] },
-      { ...valid, items: [{ productId: "p1", quantity: 0 }] },
+      {
+        ...valid,
+        items: [
+          {
+            productId: "p1",
+            pricingVersion: "2026-10-13T00:00:00.000Z",
+            quantity: 0,
+          },
+        ],
+      },
       { ...valid, city: "" },
       { ...valid, country: "" },
       { ...valid, specialty: "Other", specialtyOther: "" },

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COUNTRY_PRICING_POLICY } from "./pricing-policy";
 import { normalizeWhatsApp, isCallingCode } from "./phone";
 import { countryFromName } from "./countries";
 import { MAX_RESERVATION_QUANTITY } from "./quantity";
@@ -88,11 +89,13 @@ export const customerSchema = z
 export const bookingSchema = customerSchema
   .safeExtend({
     requestKey: z.string().uuid(),
+    pricingPolicy: z.literal(COUNTRY_PRICING_POLICY),
     items: z
       .array(
         z
           .object({
             productId: z.string().min(1).max(40),
+            pricingVersion: z.string().datetime(),
             quantity: z.number().int().min(1).max(MAX_RESERVATION_QUANTITY),
           })
           .strict(),

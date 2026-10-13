@@ -1,3 +1,5 @@
+import { COUNTRY_PRICING_POLICY } from "../../lib/pricing-policy";
+import { publicProducts } from "./public-products";
 import { test, expect, type Page } from "@playwright/test";
 async function chooseProduct(page: Page, code = "SMOKE-001") {
   await page.getByLabel("Search products").fill(code);
@@ -289,11 +291,12 @@ test("server rejects invented countries and malformed international numbers with
   request,
 }) => {
   await page.goto("/");
-  const productId = (await page.content()).match(
-    /\\"id\\":\\"([^"\\]+)\\",\\"code\\":\\"SMOKE-001/,
-  )?.[1];
-  expect(productId).toBeTruthy();
+  const product = (await publicProducts(page)).find(
+    (p) => p.code === "SMOKE-001",
+  )!;
+  expect(product).toBeTruthy();
   const payload = {
+    pricingPolicy: COUNTRY_PRICING_POLICY,
     requestKey: crypto.randomUUID(),
     doctorName: "Dr UX Validation",
     specialty: "Trauma Surgeon",
@@ -302,7 +305,13 @@ test("server rejects invented countries and malformed international numbers with
     country: "Senegal",
     phoneCountryCode: "+1",
     phoneNationalNumber: "2025550123",
-    items: [{ productId, quantity: 1 }],
+    items: [
+      {
+        productId: product.id,
+        pricingVersion: product.pricingVersion,
+        quantity: 1,
+      },
+    ],
   };
   for (const [field, value] of [
     ["country", "Invented Country"],

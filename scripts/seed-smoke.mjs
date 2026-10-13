@@ -16,6 +16,19 @@ const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 try {
+  for (const number of [
+    "2025550130",
+    "2025550131",
+    "2025550132",
+    "2025550133",
+    "2025550134",
+    "2025550139",
+  ])
+    await db.rateLimit.deleteMany({
+      where: {
+        key: `booking:${createHash("sha256").update(`+1${number}`).digest("hex")}`,
+      },
+    });
   await db.rateLimit.deleteMany({
     where: {
       key: `booking:${createHash("sha256").update("+12025550123").digest("hex")}`,
@@ -41,6 +54,7 @@ try {
     create: {
       requestKey: "00000000-0000-4000-8000-000000000001",
       doctorName: "Dr Legacy Smoke",
+      country: "India",
       phone: "9876543210",
       hospital: "Smoke test clinic",
       consentAt: new Date(),
@@ -63,6 +77,7 @@ try {
   for (const email of [
     "smoke@example.invalid",
     "smoke-import@example.invalid",
+    "smoke-currency@example.invalid",
   ]) {
     await db.rateLimit.deleteMany({
       where: {
