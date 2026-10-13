@@ -63,21 +63,29 @@ test("real catalogue, categories, CFA prices, corrected images and a central sam
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
-  await page.getByLabel("Doctor’s name").fill("Dr Catalogue Verification");
-  await page.getByLabel("Phone", { exact: true }).fill("+22990000000");
+  await page.getByLabel("Name *").fill("Dr Catalogue Verification");
+  await page.getByLabel("WhatsApp country code *", { exact: true }).fill("+1");
   await page
-    .getByLabel("Hospital / clinic")
+    .getByLabel("WhatsApp phone number *", { exact: true })
+    .fill("2025550123");
+  await page
+    .getByLabel("Hospital / Clinic *")
     .fill("Catalogue verification sample");
   await page
-    .getByLabel("Notes (optional)")
+    .getByLabel("Remarks (optional)")
     .fill(
       "SAMPLE ONLY — do not contact or fulfil. Catalogue integration verification.",
     );
-  await page.getByRole("checkbox").check();
+  await page
+    .getByLabel("Specialty *", { exact: true })
+    .selectOption("Orthopaedic Surgeon");
+  await page.getByLabel("City *", { exact: true }).fill("London");
+  await page.getByLabel("Country *", { exact: true }).fill("United Kingdom");
   await page.getByRole("button", { name: "Submit pre-booking" }).click();
-  await expect(page.getByRole("status")).toContainText("Pre-booking received");
-  const message = await page.getByRole("status").textContent();
-  const id = message!.match(/Reference: ([^.]+)\./)![1];
+  await expect(page.getByRole("status")).toContainText(
+    "Pre-booking submitted successfully",
+  );
+  const id = await page.getByRole("status").locator("dd").first().innerText();
   await page.goto("/admin/login");
   await page.getByLabel("Email", { exact: true }).fill("smoke@example.invalid");
   await page.getByLabel("Password").fill("development-only-smoke-password");
@@ -92,7 +100,7 @@ test("real catalogue, categories, CFA prices, corrected images and a central sam
   await expect(sample).toContainText("Priced subtotal: 16,000 CFA");
   await expect(sample).toContainText("SAMPLE ONLY");
   await writeFile(
-    "docs/sample-prebooking.json",
+    "/tmp/ortho-new-sample-prebooking.json",
     JSON.stringify(
       {
         id,

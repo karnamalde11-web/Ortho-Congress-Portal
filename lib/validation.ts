@@ -1,16 +1,58 @@
 import { z } from "zod";
-export const bookingSchema = z
+import { normalizeWhatsApp } from "./phone";
+export const specialties = [
+  "Orthopaedic Surgeon",
+  "Trauma Surgeon",
+  "General Practitioner",
+  "Hospital / Clinic",
+  "Distributor",
+  "Other",
+] as const;
+export const customerSchema = z
   .object({
-    requestKey: z.string().uuid(),
-    doctorName: z.string().trim().min(2).max(120),
-    phone: z
+    doctorName: z.string().trim().min(2, "Name is required").max(120),
+    specialty: z.enum(specialties),
+    specialtyOther: z.string().trim().max(120).default(""),
+    hospital: z
       .string()
       .trim()
-      .regex(/^\+?[0-9 ()-]{8,20}$/),
-    email: z.union([z.string().email().max(254), z.literal("")]).optional(),
-    hospital: z.string().trim().min(2).max(200),
+      .min(2, "Hospital / Clinic is required")
+      .max(200),
+    city: z.string().trim().min(1, "City is required").max(120),
+    country: z.string().trim().min(2, "Country is required").max(100),
+    phoneCountryCode: z
+      .string()
+      .trim()
+      .regex(/^\+[1-9]\d{0,2}$/),
+    phoneNationalNumber: z
+      .string()
+      .trim()
+      .min(4)
+      .max(30)
+      .regex(/^[0-9 ()-]+$/),
+    email: z
+      .union([z.string().trim().email().max(254), z.literal("")])
+      .optional(),
     notes: z.string().trim().max(2000).default(""),
-    consent: z.literal(true),
+  })
+  .strict()
+  .superRefine((v, ctx) => {
+    if (v.specialty === "Other" && !v.specialtyOther)
+      ctx.addIssue({
+        code: "custom",
+        path: ["specialtyOther"],
+        message: "Please enter your specialty",
+      });
+    if (!normalizeWhatsApp(v.phoneCountryCode, v.phoneNationalNumber))
+      ctx.addIssue({
+        code: "custom",
+        path: ["phoneNationalNumber"],
+        message: "Enter a valid phone number for the selected country code",
+      });
+  });
+export const bookingSchema = customerSchema
+  .safeExtend({
+    requestKey: z.string().uuid(),
     items: z
       .array(
         z
@@ -23,7 +65,6 @@ export const bookingSchema = z
       .min(1)
       .max(100),
   })
-  .strict()
   .refine(
     (v) => new Set(v.items.map((i) => i.productId)).size === v.items.length,
     "Duplicate products",

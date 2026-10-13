@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import { captureBookings, verifyBookings } from "./migration-safety.mjs";
 
 function run(args) {
   const result = spawnSync("npm", ["run", ...args], {
@@ -40,22 +41,27 @@ export async function productionSetup() {
     if (process.env[flag] && !["true", "false"].includes(process.env[flag]))
       throw new Error(`${flag} must be true or false.`);
   }
-  run(["db:migrate"]);
-  if (process.env.INITIALIZE_CATALOGUE === "true") {
-    console.log(
-      "Preparing the real exhibition catalogue in the configured database and storage.",
-    );
-    run(["catalogue:import"]);
-    run(["catalogue:verify"]);
-  }
-  if (process.env.INITIALIZE_ADMIN === "true") {
-    const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-    if (!z.string().email().max(254).safeParse(email).success)
-      throw new Error("Enter a valid ADMIN_EMAIL in Railway Variables.");
-    const db = new PrismaClient({
-      adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-    });
-    try {
+  const db = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  });
+  try {
+    const snapshot = await captureBookings(db);
+    run(["db:migrate"]);
+    await verifyBookings(db, snapshot);
+    if (
+      process.env.INITIALIZE_CATALOGUE === "true" &&
+      (await db.product.count()) === 0
+    ) {
+      console.log(
+        "Preparing the real exhibition catalogue in the configured database and storage.",
+      );
+      run(["catalogue:import"]);
+      run(["catalogue:verify"]);
+    }
+    if (process.env.INITIALIZE_ADMIN === "true") {
+      const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+      if (!z.string().email().max(254).safeParse(email).success)
+        throw new Error("Enter a valid ADMIN_EMAIL in Railway Variables.");
       const existing = await db.admin.findUnique({ where: { email } });
       if (existing)
         console.log(
@@ -78,8 +84,8 @@ export async function productionSetup() {
           "First admin created. Remove ADMIN_PASSWORD and the setup flags from Railway Variables after verification.",
         );
       }
-    } finally {
-      await db.$disconnect();
     }
+  } finally {
+    await db.$disconnect();
   }
 }

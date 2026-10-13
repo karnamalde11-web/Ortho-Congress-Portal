@@ -6,14 +6,43 @@ import AdmZip from "adm-zip";
 const valid = {
   requestKey: "41fe6367-5da7-483e-a96b-91aba60c5fe3",
   doctorName: "Dr Test",
-  phone: "9876543210",
+  phoneCountryCode: "+221",
+  phoneNationalNumber: "77 123 45 67",
+  specialty: "Orthopaedic Surgeon",
+  city: "Dakar",
+  country: "Senegal",
   hospital: "Clinic",
-  consent: true,
   items: [{ productId: "p1", quantity: 2 }],
 };
 describe("booking validation", () => {
   it("accepts a legitimate pre-booking", () =>
     expect(bookingSchema.safeParse(valid).success).toBe(true));
+  it("accepts optional email and a typed specialty and normalizes international numbers", async () => {
+    const { normalizeWhatsApp } = await import("../lib/phone");
+    expect(
+      bookingSchema.safeParse({
+        ...valid,
+        specialty: "Other",
+        specialtyOther: "Medical researcher",
+        email: "",
+      }).success,
+    ).toBe(true);
+    expect(normalizeWhatsApp("+221", "77 123 45 67")).toEqual({
+      phone: "+221771234567",
+      phoneCountryCode: "+221",
+      phoneNationalNumber: "771234567",
+    });
+    expect(normalizeWhatsApp("+44", "07911 123456")?.phone).toBe(
+      "+447911123456",
+    );
+    expect(normalizeWhatsApp("+221", "+221771234567")).toBeNull();
+  });
+  it("keeps readable references stable without changing or shortening IDs", async () => {
+    const { bookingReference } = await import("../lib/booking-reference");
+    expect(bookingReference("legacy-full-id", "2026-10-12T12:00:00Z")).toBe(
+      "NM-2026-legacy-full-id",
+    );
+  });
   it("rejects client-supplied prices", () =>
     expect(
       bookingSchema.safeParse({
@@ -21,11 +50,18 @@ describe("booking validation", () => {
         items: [{ productId: "p1", quantity: 2, price: 1 }],
       }).success,
     ).toBe(false));
-  it("rejects duplicates, invalid quantities and absent consent", () => {
+  it("rejects duplicates, invalid quantities and missing required details", () => {
     for (const data of [
       { ...valid, items: [valid.items[0], valid.items[0]] },
       { ...valid, items: [{ productId: "p1", quantity: 0 }] },
-      { ...valid, consent: false },
+      { ...valid, city: "" },
+      { ...valid, country: "" },
+      { ...valid, specialty: "Other", specialtyOther: "" },
+      { ...valid, phoneNationalNumber: "123" },
+      { ...valid, phoneCountryCode: "+999" },
+      { ...valid, doctorName: "  " },
+      { ...valid, hospital: " " },
+      { ...valid, email: "invalid" },
     ])
       expect(bookingSchema.safeParse(data).success).toBe(false);
   });

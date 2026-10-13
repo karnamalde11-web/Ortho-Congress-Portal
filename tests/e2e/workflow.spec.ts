@@ -4,7 +4,9 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Plan your exhibition order" }),
+    page.getByRole("heading", {
+      name: "NM Ortho Pricing & Pre-Booking Portal",
+    }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -13,12 +15,21 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
   ).toBe(true);
   await page.getByLabel("Search products").fill("SMOKE-001");
   await page.getByLabel("Quantity").fill("2");
-  await page.getByLabel("Doctor’s name").fill("Dr Smoke Test");
-  await page.getByLabel("Phone", { exact: true }).fill("9876543210");
-  await page.getByLabel("Hospital / clinic").fill("Smoke test clinic");
-  await page.getByRole("checkbox").check();
+  await page.getByLabel("Name *").fill("Dr Smoke Test");
+  await page.getByLabel("WhatsApp country code *", { exact: true }).fill("+1");
+  await page
+    .getByLabel("WhatsApp phone number *", { exact: true })
+    .fill("2025550123");
+  await page.getByLabel("Hospital / Clinic *").fill("Smoke test clinic");
+  await page
+    .getByLabel("Specialty *", { exact: true })
+    .selectOption("Orthopaedic Surgeon");
+  await page.getByLabel("City *", { exact: true }).fill("London");
+  await page.getByLabel("Country *", { exact: true }).fill("United Kingdom");
   await page.getByRole("button", { name: "Submit pre-booking" }).click();
-  await expect(page.getByRole("status")).toContainText("Pre-booking received");
+  await expect(page.getByRole("status")).toContainText(
+    "Pre-booking submitted successfully",
+  );
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login/);
   await page.getByLabel("Email", { exact: true }).fill("smoke@example.invalid");
@@ -27,6 +38,10 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
   await expect(
     page.getByRole("heading", { name: "Exhibition dashboard" }),
   ).toBeVisible();
+  const legacy = page.locator("article").filter({ hasText: "Dr Legacy Smoke" });
+  await expect(legacy).toContainText("9876543210");
+  await expect(legacy).toContainText("Not recorded (earlier booking)");
+  await expect(legacy).toContainText("12,345 CFA");
   const booking = page
     .locator("article")
     .filter({ hasText: "Dr Smoke Test" })
@@ -54,9 +69,12 @@ test("rejects forged prices, cross-origin submissions and unauthenticated import
     data: {
       requestKey: crypto.randomUUID(),
       doctorName: "Doctor",
-      phone: "9876543210",
+      phoneCountryCode: "+221",
+      phoneNationalNumber: "771234567",
+      specialty: "Trauma Surgeon",
+      city: "Dakar",
+      country: "Senegal",
       hospital: "Clinic",
-      consent: true,
       items: [{ productId: "forged", quantity: 1, priceCfa: 1 }],
     },
   });
@@ -78,7 +96,9 @@ test("admin imports Excel and ZIP and catalogue loads a stored image", async ({
   const AdmZip = (await import("adm-zip")).default;
   const sharp = (await import("sharp")).default;
   await page.goto("/admin/login");
-  await page.getByLabel("Email", { exact: true }).fill("smoke@example.invalid");
+  await page
+    .getByLabel("Email", { exact: true })
+    .fill("smoke-import@example.invalid");
   await page.getByLabel("Password").fill("development-only-smoke-password");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(

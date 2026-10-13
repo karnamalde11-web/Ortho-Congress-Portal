@@ -18,12 +18,11 @@ export default async function Home() {
   return (
     <>
       <p className="mb-2 text-sm font-bold tracking-widest text-teal-700">
-        ORTHOPAEDIC EXHIBITION
+        ORTHOPAEDIC CONGRESS
       </p>
-      <h1>Plan your exhibition order</h1>
+      <h1>NM Ortho Pricing &amp; Pre-Booking Portal</h1>
       <p className="my-3 max-w-2xl">
-        Explore our catalogue and reserve your requirements. Our team will
-        contact you to confirm your pre-booking. No payment required.
+        Select the products and quantities you would like to reserve for the congress. No payment is required at this stage.
       </p>
       <Catalogue
         products={products.map(({ imageUrl, ...p }) => ({

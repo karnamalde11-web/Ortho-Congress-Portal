@@ -1,8 +1,62 @@
 import { describe, it, expect } from "vitest";
 import { Client } from "pg";
+import { readFile } from "node:fs/promises";
 // Explicitly opt in with a disposable database; never point this at production.
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("PostgreSQL migration constraints", () => {
+  it("preserves every legacy booking value and item through the additive customer migration", async () => {
+    const client = new Client({ connectionString: url });
+    await client.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("CREATE SCHEMA migration_preservation_test");
+      await client.query(
+        "SET LOCAL search_path TO migration_preservation_test",
+      );
+      for (const name of [
+        "20261012120000_initial",
+        "20261012123000_cfa_catalogue",
+      ])
+        await client.query(
+          await readFile(`prisma/migrations/${name}/migration.sql`, "utf8"),
+        );
+      await client.query(
+        `INSERT INTO "Product" (id,code,name,category,"priceCfa","updatedAt") VALUES ('legacy-product','LEGACY','Legacy product','Trauma',8000,NOW())`,
+      );
+      await client.query(
+        `INSERT INTO "Booking" (id,"requestKey","doctorName",phone,email,hospital,notes,"consentAt","totalCfa","pricedSubtotalCfa",status) VALUES ('legacy-booking','legacy-request','Original Doctor','9876543210','doctor@example.invalid','Original Clinic','Preserve these remarks',NOW(),NULL,16000,'CONTACTED')`,
+      );
+      await client.query(
+        `INSERT INTO "BookingItem" (id,"bookingId","productId",code,name,"unitPriceCfa",quantity,category) VALUES ('legacy-item','legacy-booking','legacy-product','LEGACY','Legacy product',8000,2,'Trauma')`,
+      );
+      const beforeBooking = (await client.query('SELECT * FROM "Booking"'))
+        .rows[0];
+      const beforeItem = (await client.query('SELECT * FROM "BookingItem"'))
+        .rows[0];
+      const migration = await readFile(
+        "prisma/migrations/20261013090000_customer_details/migration.sql",
+        "utf8",
+      );
+      await client.query(migration.replace(/^BEGIN;|^COMMIT;/gm, ""));
+      const after = (await client.query('SELECT * FROM "Booking"')).rows[0];
+      expect(after).toMatchObject(beforeBooking);
+      for (const name of [
+        "city",
+        "country",
+        "specialty",
+        "specialtyOther",
+        "phoneCountryCode",
+        "phoneNationalNumber",
+      ])
+        expect(after[name]).toBeNull();
+      expect(
+        (await client.query('SELECT * FROM "BookingItem"')).rows[0],
+      ).toEqual(beforeItem);
+    } finally {
+      await client.query("ROLLBACK");
+      await client.end();
+    }
+  });
   it("enforces valid quantities, nonnegative prices and booking idempotency", async () => {
     const client = new Client({ connectionString: url });
     await client.connect();

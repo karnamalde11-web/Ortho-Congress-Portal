@@ -1,3 +1,5 @@
+import { normalizeWhatsApp } from "@/lib/phone";
+import { bookingReference } from "@/lib/booking-reference";
 import { bookingTotals } from "@/lib/booking-pricing";
 import { readLimitedBody } from "@/lib/body";
 import { NextResponse } from "next/server";
@@ -13,10 +15,16 @@ export async function POST(req: Request) {
     if (raw.length > 20000)
       return NextResponse.json({ error: "Request too large" }, { status: 413 });
     const data = bookingSchema.parse(JSON.parse(raw));
-    await rateLimit(`booking:${hash(data.phone.replace(/\D/g, ""))}`, 10);
+    const phone = normalizeWhatsApp(
+      data.phoneCountryCode,
+      data.phoneNationalNumber,
+    );
+    if (!phone) throw new Error("Invalid phone number");
+    await rateLimit(`booking:${hash(phone.phone)}`, 10);
     const booking = await db.$transaction(async (tx) => {
       const previous = await tx.booking.findUnique({
         where: { requestKey: data.requestKey },
+        include: { items: true },
       });
       if (previous) return previous;
       const products = await tx.product.findMany({
@@ -42,7 +50,12 @@ export async function POST(req: Request) {
         data: {
           requestKey: data.requestKey,
           doctorName: data.doctorName,
-          phone: data.phone,
+          ...phone,
+          specialty: data.specialty,
+          specialtyOther:
+            data.specialty === "Other" ? data.specialtyOther : null,
+          city: data.city,
+          country: data.country,
           email: data.email || null,
           hospital: data.hospital,
           notes: data.notes,
@@ -51,9 +64,19 @@ export async function POST(req: Request) {
           currency: "CFA",
           items: { create: items },
         },
+        include: { items: true },
       });
     });
-    return NextResponse.json({ id: booking.id }, { status: 201 });
+    return NextResponse.json(
+      {
+        id: booking.id,
+        reference: bookingReference(booking.id, booking.createdAt),
+        customerName: booking.doctorName,
+        selectedProductCount: booking.items.length,
+        hasPriceOnRequest: booking.items.some((i) => i.unitPriceCfa === null),
+      },
+      { status: 201 },
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Invalid request";
     return NextResponse.json(
@@ -63,7 +86,7 @@ export async function POST(req: Request) {
           msg.includes("Too many") ||
           msg.includes("exceeds")
             ? msg
-            : "Unable to submit. Check your details and try again.",
+            : "Unable to submit. Refresh the catalogue and check your required details and WhatsApp number.",
       },
       { status: 400 },
     );

@@ -6,6 +6,12 @@ const mocks = vi.hoisted(() => ({
   find: vi.fn(),
   create: vi.fn(),
   disconnect: vi.fn(),
+  query: vi.fn(async () => [{ name: "Booking" }]),
+  bookingFind: vi.fn(async () => [{ id: "existing-booking" }]),
+  itemFind: vi.fn(async () => [{ id: "existing-item" }]),
+  count: vi.fn(async () => 1),
+  productCount: vi.fn(async () => 0),
+  audit: vi.fn(),
   hash: vi.fn(async () => "hashed-password"),
 }));
 vi.mock("node:child_process", () => ({ spawnSync: mocks.run }));
@@ -13,6 +19,11 @@ vi.mock("@prisma/client", () => ({
   PrismaClient: class {
     admin = { findUnique: mocks.find, create: mocks.create };
     $disconnect = mocks.disconnect;
+    $queryRaw = mocks.query;
+    booking = { findMany: mocks.bookingFind, count: mocks.count };
+    bookingItem = { findMany: mocks.itemFind, count: mocks.count };
+    product = { count: mocks.productCount };
+    auditLog = { create: mocks.audit };
   },
 }));
 vi.mock("@prisma/adapter-pg", () => ({ PrismaPg: class {} }));
@@ -33,6 +44,35 @@ function settings() {
   vi.stubEnv("INITIALIZE_ADMIN", "false");
 }
 describe("Railway setup", () => {
+  it("leaves an existing live catalogue unchanged even if its initial setup flag remains enabled", async () => {
+    settings();
+    vi.stubEnv("INITIALIZE_CATALOGUE", "true");
+    mocks.productCount.mockResolvedValueOnce(220);
+    await productionSetup();
+    expect(mocks.run).toHaveBeenCalledTimes(1);
+    expect(mocks.audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "CUSTOMER_DETAILS_MIGRATION" }),
+      }),
+    );
+  });
+  it("refuses startup if an existing booking or item is missing after migration", async () => {
+    settings();
+    mocks.count.mockResolvedValueOnce(0);
+    await expect(productionSetup()).rejects.toThrow(
+      "preservation check failed",
+    );
+    expect(mocks.audit).not.toHaveBeenCalled();
+    expect(mocks.disconnect).toHaveBeenCalled();
+  });
+  it("fails safely when migration execution fails", async () => {
+    settings();
+    mocks.run.mockReturnValueOnce({ status: 1 });
+    await expect(productionSetup()).rejects.toThrow(
+      "Deployment setup step failed",
+    );
+    expect(mocks.audit).not.toHaveBeenCalled();
+  });
   it("runs only migrations on an ordinary redeployment", async () => {
     settings();
     await productionSetup();

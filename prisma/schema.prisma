@@ -30,6 +30,12 @@ model Booking {
  requestKey String @unique
  doctorName String
  phone String
+ phoneCountryCode String?
+ phoneNationalNumber String?
+ specialty String?
+ specialtyOther String?
+ city String?
+ country String?
  email String?
  hospital String
  notes String @default("")

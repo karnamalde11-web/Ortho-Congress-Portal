@@ -18,7 +18,7 @@ const db = new PrismaClient({
 try {
   await db.rateLimit.deleteMany({
     where: {
-      key: `login:${createHash("sha256").update("smoke@example.invalid").digest("hex")}`,
+      key: `booking:${createHash("sha256").update("+12025550123").digest("hex")}`,
     },
   });
   await db.product.upsert({
@@ -32,14 +32,54 @@ try {
     },
     update: { priceCfa: 12345 },
   });
-  await db.admin.upsert({
-    where: { email: "smoke@example.invalid" },
-    create: {
-      email: "smoke@example.invalid",
-      passwordHash: await hash("development-only-smoke-password", 12),
-    },
-    update: { passwordHash: await hash("development-only-smoke-password", 12) },
+  const product = await db.product.findUniqueOrThrow({
+    where: { code: "SMOKE-001" },
   });
+  await db.booking.upsert({
+    where: { requestKey: "00000000-0000-4000-8000-000000000001" },
+    update: {},
+    create: {
+      requestKey: "00000000-0000-4000-8000-000000000001",
+      doctorName: "Dr Legacy Smoke",
+      phone: "9876543210",
+      hospital: "Smoke test clinic",
+      consentAt: new Date(),
+      totalCfa: "12345.00",
+      pricedSubtotalCfa: "12345.00",
+      items: {
+        create: [
+          {
+            productId: product.id,
+            code: product.code,
+            name: product.name,
+            category: product.category,
+            unitPriceCfa: "12345.00",
+            quantity: 1,
+          },
+        ],
+      },
+    },
+  });
+  for (const email of [
+    "smoke@example.invalid",
+    "smoke-import@example.invalid",
+  ]) {
+    await db.rateLimit.deleteMany({
+      where: {
+        key: `login:${createHash("sha256").update(email).digest("hex")}`,
+      },
+    });
+    await db.admin.upsert({
+      where: { email },
+      create: {
+        email,
+        passwordHash: await hash("development-only-smoke-password", 12),
+      },
+      update: {
+        passwordHash: await hash("development-only-smoke-password", 12),
+      },
+    });
+  }
 } finally {
   await db.$disconnect();
 }

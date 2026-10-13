@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/security";
 import { db } from "@/lib/db";
+import { bookingReference } from "@/lib/booking-reference";
 import { money } from "@/lib/validation";
 import { logout, updateStatus } from "./actions";
 import ImportForm from "./import-form";
@@ -55,13 +56,47 @@ export default async function Admin({
                 )}
               </p>
             </div>
-            <p className="break-words text-sm">
-              Reference: {b.id} · {b.createdAt.toISOString()}
-            </p>
-            <p>
-              {b.hospital} · {b.phone} · {b.email}
-            </p>
-            <p className="my-2 whitespace-pre-wrap">{b.notes}</p>
+            <dl className="my-4 grid gap-3 break-words text-sm sm:grid-cols-2">
+              {[
+                ["Name", b.doctorName],
+                [
+                  "Specialty",
+                  b.specialty === "Other"
+                    ? `Other: ${b.specialtyOther ?? "Not recorded"}`
+                    : (b.specialty ?? "Not recorded (earlier booking)"),
+                ],
+                ["Hospital / Clinic", b.hospital],
+                ["City", b.city ?? "Not recorded (earlier booking)"],
+                ["Country", b.country ?? "Not recorded (earlier booking)"],
+                ["WhatsApp number", b.phone],
+                ["Email", b.email || "Not provided"],
+                ["Remarks", b.notes || "Not provided"],
+                ["Booking reference", bookingReference(b.id, b.createdAt)],
+                ["Submission date/time (UTC)", b.createdAt.toISOString()],
+                ["Booking status", b.status],
+                [
+                  "Price on Request products",
+                  b.items
+                    .filter((i) => i.unitPriceCfa === null)
+                    .map((i) => i.code)
+                    .join(", ") || "None",
+                ],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="font-bold">{label}</dt>
+                  <dd className="whitespace-pre-wrap">{value}</dd>
+                </div>
+              ))}
+              {!b.phoneCountryCode && (
+                <p>
+                  Earlier booking: WhatsApp number shown exactly as originally
+                  recorded.
+                </p>
+              )}
+            </dl>
+            <h3 className="mb-2 font-bold">
+              Selected products, quantities and CFA prices
+            </h3>
             <ul>
               {b.items.map((i) => (
                 <li key={i.id}>
@@ -70,7 +105,7 @@ export default async function Admin({
                 </li>
               ))}
             </ul>
-            <form action={updateStatus} className="mt-4 flex gap-3">
+            <form action={updateStatus} className="mt-4 flex flex-wrap gap-3">
               <input type="hidden" name="id" value={b.id} />
               <select
                 name="status"

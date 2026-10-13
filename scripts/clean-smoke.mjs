@@ -14,17 +14,31 @@ const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 try {
-  const admin = await db.admin.findUnique({
-    where: { email: "smoke@example.invalid" },
+  const admins = await db.admin.findMany({
+    where: {
+      email: { in: ["smoke@example.invalid", "smoke-import@example.invalid"] },
+    },
   });
   await db.$transaction(async (tx) => {
     await tx.booking.deleteMany({
-      where: { doctorName: "Dr Smoke Test", hospital: "Smoke test clinic" },
+      where: {
+        doctorName: {
+          in: [
+            "Dr Smoke Test",
+            "Dr Legacy Smoke",
+            "Dr Mobile 375",
+            "Dr Mobile 390",
+            "Dr Mobile 430",
+            "Dr Retry Test",
+          ],
+        },
+        hospital: "Smoke test clinic",
+      },
     });
     await tx.product.deleteMany({
       where: { code: { in: ["SMOKE-001", "IMPORT-SMOKE"] } },
     });
-    if (admin) {
+    for (const admin of admins) {
       await tx.auditLog.deleteMany({ where: { adminId: admin.id } });
       await tx.admin.delete({ where: { id: admin.id } });
     }
