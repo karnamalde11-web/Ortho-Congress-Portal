@@ -1,3 +1,4 @@
+import { ZodError } from "zod";
 import { normalizeWhatsApp } from "@/lib/phone";
 import { bookingReference } from "@/lib/booking-reference";
 import { bookingTotals } from "@/lib/booking-pricing";
@@ -78,6 +79,14 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (e) {
+    if (e instanceof ZodError)
+      return NextResponse.json(
+        {
+          error: "Please correct the highlighted fields.",
+          fieldErrors: e.flatten().fieldErrors,
+        },
+        { status: 400 },
+      );
     const msg = e instanceof Error ? e.message : "Invalid request";
     return NextResponse.json(
       {

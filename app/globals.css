@@ -11,6 +11,7 @@ input,
 textarea,
 select {
   display: block;
+  min-width: 0;
   width: 100%;
   border: 1px solid #b6c9cc;
   border-radius: 8px;
@@ -28,6 +29,9 @@ button,
 }
 button:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+}
+button[aria-busy="true"] {
   cursor: wait;
 }
 label {
@@ -64,4 +68,19 @@ a {
 :focus-visible {
   outline: 3px solid #d98a27;
   outline-offset: 3px;
+}
+
+.country-code-input {
+  padding-left: 28px;
+}
+.submission-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: #b91c1c;
 }

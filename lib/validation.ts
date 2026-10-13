@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { normalizeWhatsApp } from "./phone";
+import { normalizeWhatsApp, isCallingCode } from "./phone";
+import { countryFromName } from "./countries";
+import { MAX_RESERVATION_QUANTITY } from "./quantity";
 export const specialties = [
   "Orthopaedic Surgeon",
   "Trauma Surgeon",
@@ -10,30 +12,59 @@ export const specialties = [
 ] as const;
 export const customerSchema = z
   .object({
-    doctorName: z.string().trim().min(2, "Name is required").max(120),
-    specialty: z.enum(specialties),
-    specialtyOther: z.string().trim().max(120).default(""),
+    doctorName: z
+      .string()
+      .trim()
+      .min(2, "Please enter your name (at least 2 characters).")
+      .max(120, "Name must be no longer than 120 characters."),
+    specialty: z.enum(specialties, { error: "Please select your specialty." }),
+    specialtyOther: z
+      .string()
+      .trim()
+      .max(120, "Specialty must be no longer than 120 characters.")
+      .default(""),
     hospital: z
       .string()
       .trim()
-      .min(2, "Hospital / Clinic is required")
-      .max(200),
-    city: z.string().trim().min(1, "City is required").max(120),
-    country: z.string().trim().min(2, "Country is required").max(100),
+      .min(2, "Please enter your hospital or clinic (at least 2 characters).")
+      .max(200, "Hospital / Clinic must be no longer than 200 characters."),
+    city: z
+      .string()
+      .trim()
+      .min(1, "Please enter your city.")
+      .max(120, "City must be no longer than 120 characters."),
+    country: z
+      .string()
+      .refine(
+        (value) => !!countryFromName(value),
+        "Please select a country from the list.",
+      ),
     phoneCountryCode: z
       .string()
       .trim()
-      .regex(/^\+[1-9]\d{0,2}$/),
+      .regex(/^\+[1-9]\d{0,2}$/, "Please enter a valid country code.")
+      .refine(isCallingCode, "Please enter a valid country code."),
     phoneNationalNumber: z
       .string()
       .trim()
-      .min(4)
-      .max(30)
-      .regex(/^[0-9 ()-]+$/),
+      .min(4, "Please enter a valid phone number.")
+      .max(30, "Please enter a valid phone number.")
+      .regex(/^[0-9 ()-]+$/, "Please enter a valid phone number."),
     email: z
-      .union([z.string().trim().email().max(254), z.literal("")])
+      .union([
+        z
+          .string()
+          .trim()
+          .email("Please enter a valid email address or leave it blank.")
+          .max(254),
+        z.literal(""),
+      ])
       .optional(),
-    notes: z.string().trim().max(2000).default(""),
+    notes: z
+      .string()
+      .trim()
+      .max(2000, "Remarks must be no longer than 2000 characters.")
+      .default(""),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -41,13 +72,17 @@ export const customerSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["specialtyOther"],
-        message: "Please enter your specialty",
+        message: "Please enter your specialty.",
       });
-    if (!normalizeWhatsApp(v.phoneCountryCode, v.phoneNationalNumber))
+    if (
+      isCallingCode(v.phoneCountryCode) &&
+      !normalizeWhatsApp(v.phoneCountryCode, v.phoneNationalNumber)
+    )
       ctx.addIssue({
         code: "custom",
         path: ["phoneNationalNumber"],
-        message: "Enter a valid phone number for the selected country code",
+        message:
+          "Please enter a valid phone number for the selected country code.",
       });
   });
 export const bookingSchema = customerSchema
@@ -58,7 +93,7 @@ export const bookingSchema = customerSchema
         z
           .object({
             productId: z.string().min(1).max(40),
-            quantity: z.number().int().min(1).max(100),
+            quantity: z.number().int().min(1).max(MAX_RESERVATION_QUANTITY),
           })
           .strict(),
       )

@@ -13,14 +13,14 @@ for (const width of [375, 390, 430]) {
     await expect(submit).toBeDisabled();
     await expect(
       page.getByLabel("WhatsApp country code *", { exact: true }),
-    ).toHaveValue("+221");
+    ).toHaveValue("221");
     await page.getByLabel("Name *", { exact: true }).fill(`Dr Mobile ${width}`);
     await page.getByLabel("Specialty *", { exact: true }).selectOption("Other");
     await page
       .getByLabel("Hospital / Clinic *", { exact: true })
       .fill("Smoke test clinic");
     await page.getByLabel("City *", { exact: true }).fill("Dakar");
-    await page.getByLabel("Country *", { exact: true }).fill("Senegal");
+    await page.getByLabel("Country *", { exact: true }).selectOption("Senegal");
     await page
       .getByLabel("WhatsApp phone number *", { exact: true })
       .fill("771234567");

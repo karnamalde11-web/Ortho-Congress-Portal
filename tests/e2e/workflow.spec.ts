@@ -25,7 +25,10 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
     .getByLabel("Specialty *", { exact: true })
     .selectOption("Orthopaedic Surgeon");
   await page.getByLabel("City *", { exact: true }).fill("London");
-  await page.getByLabel("Country *", { exact: true }).fill("United Kingdom");
+  await page
+    .getByLabel("Country *", { exact: true })
+    .selectOption("United Kingdom");
+  await page.getByLabel("WhatsApp country code *", { exact: true }).fill("1");
   await page.getByRole("button", { name: "Submit pre-booking" }).click();
   await expect(page.getByRole("status")).toContainText(
     "Pre-booking submitted successfully",

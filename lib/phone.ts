@@ -9,6 +9,9 @@ const callingCodes = new Set(
 export const countryCodeOptions = [...callingCodes].sort(
   (a, b) => Number(a.slice(1)) - Number(b.slice(1)),
 );
+export function isCallingCode(value: string) {
+  return callingCodes.has(value);
+}
 export function normalizeWhatsApp(countryCode: string, nationalInput: string) {
   if (!callingCodes.has(countryCode) || !/^[0-9 ()-]+$/.test(nationalInput))
     return null;

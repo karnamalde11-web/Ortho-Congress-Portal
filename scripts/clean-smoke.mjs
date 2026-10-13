@@ -30,6 +30,8 @@ try {
             "Dr Mobile 390",
             "Dr Mobile 430",
             "Dr Retry Test",
+            "Dr UX Retry",
+            "Dr UX POR",
           ],
         },
         hospital: "Smoke test clinic",
