@@ -97,3 +97,9 @@ The existing website and PostgreSQL services handle analytics; no new service or
 After the tested update is pushed to `main`, Railway deploys automatically. Verify `/api/health` reports the new release, `analyticsReady: true` and `existingBookingsPreserved: true`. Verify first-party tracking cookies are issued only after the public tracking transaction succeeds, refreshes reuse the session, and anonymous access to `/admin/analytics` redirects to login. The owner can sign in privately and use **Visitor analytics** in the admin dashboard. No admin password should be shared.
 
 Analytics begins with this deployment and cannot reconstruct earlier anonymous visits. The privacy page provides an opt-out; daily cleanup removes old anonymous visits after 90 days while retaining real pre-bookings. See [analytics definitions and privacy limits](ANALYTICS.md).
+
+## Compact booking management update (14 October 2026)
+
+The additive `20261014090000_booking_management` migration adds Quotation Sent, Invoice Sent, Paid and Collected statuses plus query indexes. It does not rewrite or delete any historical booking, item or product. Push the tested commit to `main`; the existing Railway integration applies the migration and checks preserved booking/item IDs automatically. No new service, variable or owner-entered database command is required.
+
+Verify `/api/health` reports the new release, `bookingManagementReady: true` and `existingBookingsPreserved: true`. Anonymous access to `/admin`, `/admin/bookings/<id>` and `/admin/stock` must redirect to sign-in; all export variants must return 401 without an admin session. The owner then signs in privately to review the Active table and download reports. See [booking management instructions](BOOKING-MANAGEMENT.md).

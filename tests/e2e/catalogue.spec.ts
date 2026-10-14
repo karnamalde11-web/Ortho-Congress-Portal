@@ -96,6 +96,12 @@ test("real catalogue, categories, CFA prices, corrected images and a central sam
   await expect(
     page.getByRole("heading", { name: "Exhibition dashboard" }),
   ).toBeVisible();
+  await page
+    .getByRole("table", { name: "Pre-bookings", exact: true })
+    .getByRole("row")
+    .filter({ hasText: id })
+    .getByRole("link", { name: /^View / })
+    .click();
   const sample = page.locator("article").filter({ hasText: id });
   await expect(sample).toContainText("INS-001");
   await expect(sample).toContainText("AR-006");

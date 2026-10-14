@@ -80,6 +80,7 @@ try {
     "smoke-import@example.invalid",
     "smoke-currency@example.invalid",
     "smoke-analytics@example.invalid",
+    "smoke-management@example.invalid",
   ]) {
     await db.rateLimit.deleteMany({
       where: {

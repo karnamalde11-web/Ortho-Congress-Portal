@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 // Explicitly opt in with a disposable database; never point this at production.
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("PostgreSQL migration constraints", () => {
-  it("preserves every legacy booking value, item and product through both additive migrations", async () => {
+  it("preserves every legacy booking value, item and product through all additive migrations", async () => {
     const client = new Client({ connectionString: url });
     await client.connect();
     try {
@@ -121,6 +121,41 @@ describe.skipIf(!url)("PostgreSQL migration constraints", () => {
         (await client.query('SELECT "visitId" FROM "AnalyticsConversion"'))
           .rows[0].visitId,
       ).toBeNull();
+      await client.query(
+        `INSERT INTO "Booking" (id,"requestKey","doctorName",phone,hospital,"consentAt",status) VALUES ('cancelled-legacy','cancelled-legacy-request','Cancelled doctor','1234567890','Preserved clinic',NOW(),'CANCELLED')`,
+      );
+      const beforeManagement = (
+        await client.query('SELECT * FROM "Booking" ORDER BY id')
+      ).rows;
+      const managementMigration = await readFile(
+        "prisma/migrations/20261014090000_booking_management/migration.sql",
+        "utf8",
+      );
+      await client.query(managementMigration);
+      expect(
+        (await client.query('SELECT * FROM "Booking" ORDER BY id')).rows,
+      ).toEqual(beforeManagement);
+      expect(
+        (await client.query('SELECT * FROM "BookingItem"')).rows[0],
+      ).toEqual(beforeAnalyticsItem);
+      expect((await client.query('SELECT * FROM "Product"')).rows[0]).toEqual(
+        beforeProduct,
+      );
+      const states = await client.query(
+        `SELECT enumlabel FROM pg_enum WHERE enumtypid = '"BookingStatus"'::regtype`,
+      );
+      expect(states.rows.map((row) => row.enumlabel)).toEqual(
+        expect.arrayContaining([
+          "NEW",
+          "CONTACTED",
+          "CONFIRMED",
+          "CANCELLED",
+          "QUOTATION_SENT",
+          "INVOICE_SENT",
+          "PAID",
+          "COLLECTED",
+        ]),
+      );
     } finally {
       await client.query("ROLLBACK");
       await client.end();

@@ -11,7 +11,7 @@ import {
   rateLimit,
   requireAdmin,
 } from "@/lib/security";
-import { BookingStatus } from "@prisma/client";
+import { isBookingStatus } from "@/lib/booking-filters";
 export async function login(form: FormData) {
   let ok = false;
   try {
@@ -44,25 +44,57 @@ export async function logout() {
   (await cookies()).delete("ortho_session");
   redirect("/admin/login");
 }
-export async function updateStatus(form: FormData) {
+export async function updateStatus(
+  _previous: { error?: string; success?: string },
+  form: FormData,
+): Promise<{ error?: string; success?: string }> {
   await checkOrigin();
   const admin = await requireAdmin();
-  const id = String(form.get("id"));
-  const status = String(form.get("status"));
-  if (!Object.values(BookingStatus).includes(status as BookingStatus))
-    throw new Error("Invalid status");
-  await db.$transaction([
-    db.booking.update({
+  const id = String(form.get("id") ?? "");
+  const status = String(form.get("status") ?? "");
+  const expected = String(form.get("expectedStatus") ?? "");
+  if (
+    !/^[a-zA-Z0-9_-]{1,80}$/.test(id) ||
+    !isBookingStatus(status) ||
+    !isBookingStatus(expected)
+  )
+    return { error: "Please choose a valid booking status." };
+  const result = await db.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
       where: { id },
-      data: { status: status as BookingStatus },
-    }),
-    db.auditLog.create({
+      select: { status: true },
+    });
+    if (!booking) return "missing";
+    if (booking.status !== expected) return "conflict";
+    if (booking.status === status) return "unchanged";
+    const updated = await tx.booking.updateMany({
+      where: { id, status: expected },
+      data: { status },
+    });
+    if (updated.count !== 1) return "conflict";
+    await tx.auditLog.create({
       data: {
         adminId: admin.id,
         action: "BOOKING_STATUS",
-        detail: JSON.stringify({ id, status }),
+        detail: JSON.stringify({ id, fromStatus: expected, status }),
       },
-    }),
-  ]);
+    });
+    return "updated";
+  });
+  if (result === "missing")
+    return { error: "This booking could not be found." };
+  if (result === "conflict")
+    return {
+      error:
+        "Another administrator changed this booking. Refresh the page before updating it.",
+    };
   revalidatePath("/admin");
+  revalidatePath("/admin/stock");
+  revalidatePath(`/admin/bookings/${id}`);
+  return {
+    success:
+      result === "unchanged"
+        ? "This status is already saved."
+        : "Booking status updated.",
+  };
 }

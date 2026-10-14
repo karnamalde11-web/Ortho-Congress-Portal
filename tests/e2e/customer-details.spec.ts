@@ -98,6 +98,12 @@ for (const width of [375, 390, 430]) {
       .fill("smoke@example.invalid");
     await page.getByLabel("Password").fill("development-only-smoke-password");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page
+      .getByRole("table", { name: "Pre-bookings", exact: true })
+      .getByRole("row")
+      .filter({ hasText: reference })
+      .getByRole("link", { name: /^View / })
+      .click();
     const booking = page.locator("article").filter({ hasText: reference });
     await expect(booking).toContainText("Other: Medical researcher");
     await expect(booking).toContainText("Dakar");

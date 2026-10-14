@@ -198,6 +198,13 @@ test("CFA/USD priced, mixed and POR-only bookings save customer currency and ren
     page.getByRole("heading", { name: "Exhibition dashboard" }),
   ).toBeVisible();
   for (const item of references) {
+    await page.goto("/admin");
+    await page
+      .getByRole("table", { name: "Pre-bookings", exact: true })
+      .getByRole("row")
+      .filter({ hasText: item.reference })
+      .getByRole("link", { name: /^View / })
+      .click();
     const booking = page.locator("article").filter({ hasText: item.reference });
     await expect(
       booking
@@ -223,6 +230,10 @@ test("CFA/USD priced, mixed and POR-only bookings save customer currency and ren
       );
     if (item.por) await expect(booking).toContainText("Price on Request");
   }
+  await page.goto("/admin");
+  await page
+    .getByRole("link", { name: "View Dr Legacy Smoke", exact: true })
+    .click();
   const legacy = page.locator("article").filter({ hasText: "Dr Legacy Smoke" });
   await expect(legacy).toContainText("India");
   await expect(legacy).toContainText("12,345 CFA");

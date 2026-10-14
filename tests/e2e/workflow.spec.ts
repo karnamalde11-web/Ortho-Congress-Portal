@@ -42,10 +42,18 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
   await expect(
     page.getByRole("heading", { name: "Exhibition dashboard" }),
   ).toBeVisible();
+  await page
+    .getByRole("link", { name: "View Dr Legacy Smoke", exact: true })
+    .click();
   const legacy = page.locator("article").filter({ hasText: "Dr Legacy Smoke" });
   await expect(legacy).toContainText("9876543210");
   await expect(legacy).toContainText("Not recorded (earlier booking)");
   await expect(legacy).toContainText("12,345 CFA");
+  await page.getByRole("link", { name: "← Back to Bookings" }).click();
+  await page
+    .getByRole("link", { name: "View Dr Smoke Test", exact: true })
+    .first()
+    .click();
   const booking = page
     .locator("article")
     .filter({ hasText: "Dr Smoke Test" })
@@ -118,6 +126,7 @@ test("admin imports Excel and ZIP and catalogue loads a stored image", async ({
   await expect(
     page.getByRole("heading", { name: "Exhibition dashboard" }),
   ).toBeVisible();
+  await page.getByText("Catalogue import", { exact: true }).click();
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Products");
   sheet.addRow(["SKU", "Name", "Category", "Description", "Price"]);

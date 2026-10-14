@@ -84,3 +84,14 @@ textarea[aria-invalid="true"],
 select[aria-invalid="true"] {
   border-color: #b91c1c;
 }
+
+.booking-table th,
+.booking-table td {
+  vertical-align: top;
+}
+.booking-table th {
+  white-space: nowrap;
+}
+.booking-table td:first-child a {
+  overflow-wrap: anywhere;
+}

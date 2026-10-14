@@ -15,6 +15,10 @@ export async function GET() {
       { ready: boolean }[]
     >`SELECT (to_regclass('public."AnalyticsVisit"') IS NOT NULL AND to_regclass('public."AnalyticsEvent"') IS NOT NULL AND to_regclass('public."AnalyticsConversion"') IS NOT NULL) AS ready`;
     if (!analyticsTables?.ready) throw new Error("Migration pending");
+    const [management] = await db.$queryRaw<
+      { ready: boolean }[]
+    >`SELECT ((SELECT COUNT(*) FROM pg_enum WHERE enumtypid = '"BookingStatus"'::regtype AND enumlabel IN ('QUOTATION_SENT','INVOICE_SENT','PAID','COLLECTED')) = 4 AND to_regclass('public."Booking_status_createdAt_idx"') IS NOT NULL AND to_regclass('public."Booking_country_createdAt_idx"') IS NOT NULL) AS ready`;
+    if (!management?.ready) throw new Error("Migration pending");
     const release = process.env.RAILWAY_GIT_COMMIT_SHA || "local";
     const audit = await db.auditLog.findFirst({
       where: { action: "CUSTOMER_DETAILS_MIGRATION" },
@@ -27,6 +31,7 @@ export async function GET() {
       customerDetailsReady: true,
       currencySnapshotsReady: true,
       analyticsReady: true,
+      bookingManagementReady: true,
       existingBookingsPreserved:
         evidence?.release === release && evidence?.preserved === true,
     });

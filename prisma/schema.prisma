@@ -8,7 +8,11 @@ datasource db {
 enum BookingStatus {
  NEW
  CONTACTED
+ QUOTATION_SENT
+ INVOICE_SENT
  CONFIRMED
+ PAID
+ COLLECTED
  CANCELLED
 }
 model Product {
@@ -50,6 +54,8 @@ model Booking {
  items BookingItem[]
  analyticsConversion AnalyticsConversion?
  @@index([createdAt])
+ @@index([status, createdAt])
+ @@index([country, createdAt])
 }
 model BookingItem {
  id String @id @default(cuid())
@@ -89,6 +95,7 @@ model AuditLog {
  action String
  detail String
  createdAt DateTime @default(now())
+ @@index([action, createdAt])
 }
 model AnalyticsVisit {
  id String @id @default(uuid()) @db.Uuid
