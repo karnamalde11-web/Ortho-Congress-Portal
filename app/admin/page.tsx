@@ -48,6 +48,7 @@ export default async function Admin({
       <nav className="my-4 flex flex-wrap gap-4">
         <a href="/admin/analytics">Visitor analytics</a>
         <a href="/admin/stock">Stock requirements</a>
+        <a href="/admin/notifications">Email alerts</a>
       </nav>
       <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-6">
         {[

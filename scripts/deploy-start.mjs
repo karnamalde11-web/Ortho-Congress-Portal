@@ -1,9 +1,11 @@
 import { startAnalyticsRetention } from "./analytics-retention.mjs";
+import { startBookingEmails } from "./booking-email-worker.mjs";
 import { spawn } from "node:child_process";
 import { productionSetup } from "./production-setup.mjs";
 try {
   await productionSetup();
   const stopRetention = startAnalyticsRetention();
+  const stopEmails = startBookingEmails();
   // Setup credentials must not be inherited by the web application.
   const runtimeEnv = { ...process.env, NODE_ENV: "production" };
   for (const name of [
@@ -32,11 +34,13 @@ try {
     process.on(signal, () => server.kill(signal));
   server.on("error", () => {
     stopRetention();
+    stopEmails();
     console.error("Application startup failed.");
     process.exitCode = 1;
   });
   server.on("exit", (code, signal) => {
     stopRetention();
+    stopEmails();
     process.exitCode = code ?? (signal ? 1 : 0);
   });
 } catch (error) {

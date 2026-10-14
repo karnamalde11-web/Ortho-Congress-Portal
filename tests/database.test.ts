@@ -156,6 +156,27 @@ describe.skipIf(!url)("PostgreSQL migration constraints", () => {
           "COLLECTED",
         ]),
       );
+      const beforeEmails = (
+        await client.query('SELECT * FROM "Booking" ORDER BY id')
+      ).rows;
+      await client.query(
+        await readFile(
+          "prisma/migrations/20261014140000_booking_email_alerts/migration.sql",
+          "utf8",
+        ),
+      );
+      expect(
+        (await client.query('SELECT * FROM "Booking" ORDER BY id')).rows,
+      ).toEqual(beforeEmails);
+      expect(
+        (await client.query('SELECT * FROM "BookingItem"')).rows[0],
+      ).toEqual(beforeAnalyticsItem);
+      expect((await client.query('SELECT * FROM "Product"')).rows[0]).toEqual(
+        beforeProduct,
+      );
+      expect(
+        (await client.query('SELECT * FROM "BookingEmail"')).rows,
+      ).toHaveLength(0);
     } finally {
       await client.query("ROLLBACK");
       await client.end();

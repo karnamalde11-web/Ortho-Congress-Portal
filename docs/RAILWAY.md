@@ -103,3 +103,9 @@ Analytics begins with this deployment and cannot reconstruct earlier anonymous v
 The additive `20261014090000_booking_management` migration adds Quotation Sent, Invoice Sent, Paid and Collected statuses plus query indexes. It does not rewrite or delete any historical booking, item or product. Push the tested commit to `main`; the existing Railway integration applies the migration and checks preserved booking/item IDs automatically. No new service, variable or owner-entered database command is required.
 
 Verify `/api/health` reports the new release, `bookingManagementReady: true` and `existingBookingsPreserved: true`. Anonymous access to `/admin`, `/admin/bookings/<id>` and `/admin/stock` must redirect to sign-in; all export variants must return 401 without an admin session. The owner then signs in privately to review the Active table and download reports. See [booking management instructions](BOOKING-MANAGEMENT.md).
+
+## Optional email alerts update (14 October 2026)
+
+Migration `20261014140000_booking_email_alerts` adds an empty, durable queue without changing historical bookings or products. Existing deployment startup applies it and verifies booking/item preservation. Health adds `emailAlertsReady: true`; this confirms the database architecture, not email-account activation or inbox delivery.
+
+No additional Railway service is needed. Alerts remain off until `BOOKING_EMAIL_ENABLED=true`. The optional website-service variables are `RESEND_API_KEY` (private), `BOOKING_EMAIL_TO=admin`, and `BOOKING_EMAIL_FROM` (a plain sender email address). Use only server-side variable names. The owner chose their existing Admin email. The provider account must be connected and one real owner inbox alert checked before calling email notifications active. Public pre-bookings continue to save even while email sending is unavailable. See [guided setup and reliability limits](EMAIL-ALERTS.md).

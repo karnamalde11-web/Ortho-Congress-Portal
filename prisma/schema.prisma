@@ -53,6 +53,7 @@ model Booking {
  createdAt DateTime @default(now())
  items BookingItem[]
  analyticsConversion AnalyticsConversion?
+ bookingEmail BookingEmail?
  @@index([createdAt])
  @@index([status, createdAt])
  @@index([country, createdAt])
@@ -70,6 +71,22 @@ model BookingItem {
  lineSubtotalDisplay Decimal? @db.Decimal(14, 2)
  category String @default("")
  quantity Int
+}
+model BookingEmail {
+ id String @id @default(cuid())
+ bookingId String @unique
+ booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+ status String @default("PENDING")
+ attempts Int @default(0)
+ availableAt DateTime @default(now())
+ leaseUntil DateTime?
+ firstAttemptAt DateTime?
+ payload Json?
+ providerId String?
+ lastError String?
+ sentAt DateTime?
+ createdAt DateTime @default(now())
+ @@index([status, availableAt])
 }
 model Admin {
  id String @id @default(cuid())

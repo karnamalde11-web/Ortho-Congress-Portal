@@ -5,6 +5,7 @@ import { bookingReference } from "@/lib/booking-reference";
 import { currencyForCountry, recordedPricing } from "@/lib/currency";
 import { bookingTotals, displayPricing } from "@/lib/booking-pricing";
 import { readLimitedBody } from "@/lib/body";
+import { emailEnabled } from "@/lib/booking-email.mjs";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bookingSchema } from "@/lib/validation";
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
           notes: data.notes,
           consentAt: new Date(),
           ...totals,
+          ...(emailEnabled() ? { bookingEmail: { create: {} } } : {}),
           currency,
           pricedSubtotalDisplay: display.pricedSubtotalDisplay,
           totalDisplay: display.totalDisplay,
