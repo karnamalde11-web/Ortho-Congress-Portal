@@ -24,6 +24,7 @@ try {
     "2025550134",
     "2025550139",
     "2025550180",
+    "2025550186",
   ])
     await db.rateLimit.deleteMany({
       where: {

@@ -25,6 +25,9 @@ export async function POST(req: Request) {
     if (!phone) throw new Error("Invalid phone number");
     await rateLimit(`booking:${hash(phone.phone)}`, 10);
     const booking = await db.$transaction(async (tx) => {
+      // Network retries can arrive concurrently. Serialize one request key so
+      // every retry receives the saved receipt instead of a uniqueness error.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${data.requestKey}))::text`;
       const previous = await tx.booking.findUnique({
         where: { requestKey: data.requestKey },
         include: { items: true },
