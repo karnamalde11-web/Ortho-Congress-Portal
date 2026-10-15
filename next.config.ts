@@ -14,6 +14,14 @@ const config: NextConfig = {
           },
         ],
       },
+      {
+        source: "/downloads/nm-ortho-qr.png",
+        headers: [{ key: "Content-Disposition", value: 'attachment; filename="NM-Ortho-QR.png"' }],
+      },
+      {
+        source: "/downloads/nm-ortho-qr-print.pdf",
+        headers: [{ key: "Content-Disposition", value: 'attachment; filename="NM-Ortho-QR-Print.pdf"' }],
+      },
     ];
   },
   serverExternalPackages: ["exceljs", "adm-zip"],
