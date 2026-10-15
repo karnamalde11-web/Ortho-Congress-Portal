@@ -1,8 +1,8 @@
 import { recordAnalyticsSubmission } from "@/lib/analytics-server";
 import { ZodError } from "zod";
 import { normalizeWhatsApp } from "@/lib/phone";
-import { bookingReference } from "@/lib/booking-reference";
-import { currencyForCountry, recordedPricing } from "@/lib/currency";
+import { bookingReceipt } from "@/lib/booking-receipt";
+import { currencyForCountry } from "@/lib/currency";
 import { bookingTotals, displayPricing } from "@/lib/booking-pricing";
 import { readLimitedBody } from "@/lib/body";
 import { emailEnabled } from "@/lib/booking-email.mjs";
@@ -92,17 +92,10 @@ export async function POST(req: Request) {
       recordAnalyticsSubmission(booking),
       new Promise<void>((resolve) => setTimeout(resolve, 150)),
     ]);
-    return NextResponse.json(
-      {
-        id: booking.id,
-        reference: bookingReference(booking.id, booking.createdAt),
-        customerName: booking.doctorName,
-        selectedProductCount: booking.items.length,
-        ...recordedPricing(booking),
-        hasPriceOnRequest: booking.items.some((i) => i.unitPriceCfa === null),
-      },
-      { status: 201 },
-    );
+    return NextResponse.json(bookingReceipt(booking), {
+      status: 201,
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (e) {
     if (
       e instanceof ZodError &&

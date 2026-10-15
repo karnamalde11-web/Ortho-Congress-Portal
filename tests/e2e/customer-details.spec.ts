@@ -78,8 +78,21 @@ for (const width of [375, 390, 430]) {
     ).toBeVisible();
     const confirmation = page.getByRole("status");
     await expect(confirmation).toContainText(`Dr Mobile ${width}`);
-    await expect(confirmation.locator("dd").nth(2)).toHaveText("1");
-    await expect(confirmation.locator("dd").nth(3)).toHaveText("No");
+    await expect(
+      confirmation
+        .locator("dt")
+        .filter({ hasText: /^Selected products$/ })
+        .locator("..")
+        .locator("dd"),
+    ).toHaveText("1");
+    await expect(
+      confirmation
+        .locator("dt")
+        .filter({ hasText: /^Total:$/ })
+        .locator("..")
+        .locator("dd"),
+    ).toHaveText("12,345 CFA");
+    await expect(confirmation).not.toContainText("Price on Request");
     const reference = await confirmation.locator("dd").first().innerText();
     expect(reference).toMatch(/^NM-2026-.+/);
     expect(

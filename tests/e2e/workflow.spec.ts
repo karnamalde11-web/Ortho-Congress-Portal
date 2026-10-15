@@ -42,6 +42,7 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
   await expect(
     page.getByRole("heading", { name: "Exhibition dashboard" }),
   ).toBeVisible();
+  await page.goto("/admin?q=Dr%20Legacy%20Smoke");
   await page
     .getByRole("link", { name: "View Dr Legacy Smoke", exact: true })
     .click();
@@ -50,6 +51,7 @@ test("mobile catalogue, real pre-booking, secure admin and central status", asyn
   await expect(legacy).toContainText("Not recorded (earlier booking)");
   await expect(legacy).toContainText("12,345 CFA");
   await page.getByRole("link", { name: "← Back to Bookings" }).click();
+  await page.goto("/admin?q=Dr%20Smoke%20Test");
   await page
     .getByRole("link", { name: "View Dr Smoke Test", exact: true })
     .first()

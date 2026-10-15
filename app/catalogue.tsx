@@ -4,23 +4,11 @@ import { useRef, useState } from "react";
 import { countries, countryFromName } from "@/lib/countries";
 import { parseQuantityInput, MAX_RESERVATION_QUANTITY } from "@/lib/quantity";
 import { COUNTRY_PRICING_POLICY } from "@/lib/pricing-policy";
-import {
-  currencyForCountry,
-  sellingPrice,
-  displayMoney,
-  type DisplayCurrency,
-} from "@/lib/currency";
+import { currencyForCountry, sellingPrice, displayMoney } from "@/lib/currency";
 import { displayPricing } from "@/lib/booking-pricing";
 import { customerSchema, specialties } from "@/lib/validation";
-type Confirmation = {
-  reference: string;
-  customerName: string;
-  selectedProductCount: number;
-  hasPriceOnRequest: boolean;
-  currency: DisplayCurrency;
-  pricedSubtotalDisplay: string;
-  totalDisplay: string | null;
-};
+import BookingReceipt from "./booking-receipt";
+import type { BookingReceiptData } from "@/lib/booking-receipt";
 type Product = {
   id: string;
   code: string;
@@ -42,7 +30,9 @@ export default function Catalogue({ products }: { products: Product[] }) {
   const submitting = useRef(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [confirmation, setConfirmation] = useState<BookingReceiptData | null>(
+    null,
+  );
   const [customer, setCustomer] = useState({
     doctorName: "",
     specialty: "",
@@ -194,48 +184,10 @@ export default function Catalogue({ products }: { products: Product[] }) {
   }
   if (confirmation)
     return (
-      <section className="card mx-auto my-8 max-w-2xl" role="status">
-        <h2>Pre-booking submitted successfully</h2>
-        <dl className="my-6 space-y-3 break-words">
-          <div>
-            <dt className="font-bold">Booking reference number</dt>
-            <dd>{confirmation.reference}</dd>
-          </div>
-          <div>
-            <dt className="font-bold">Customer name</dt>
-            <dd>{confirmation.customerName}</dd>
-          </div>
-          <div>
-            <dt className="font-bold">Selected products</dt>
-            <dd>{confirmation.selectedProductCount}</dd>
-          </div>
-
-          <div>
-            <dt className="font-bold">Price on Request items</dt>
-            <dd>
-              {confirmation.hasPriceOnRequest
-                ? "Yes — final prices will be confirmed by our team."
-                : "No"}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-bold">Priced subtotal</dt>
-            <dd>
-              {displayMoney(
-                confirmation.pricedSubtotalDisplay,
-                confirmation.currency,
-              )}
-            </dd>
-          </div>
-        </dl>
-        <p>
-          Our team will contact you regarding confirmation, availability and
-          final invoicing.
-        </p>
-        <button className="mt-6" onClick={() => setConfirmation(null)}>
-          Return to catalogue
-        </button>
-      </section>
+      <BookingReceipt
+        receipt={confirmation}
+        onReturn={() => setConfirmation(null)}
+      />
     );
   return (
     <>

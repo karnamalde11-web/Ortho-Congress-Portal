@@ -177,7 +177,9 @@ test("CFA/USD priced, mixed and POR-only bookings save customer currency and ren
       hasPriceOnRequest: item.por,
       selectedProductCount: item.products.length,
     });
-    await expect(page.getByRole("status")).toContainText(item.formatted);
+    await expect(page.getByRole("status")).toContainText(
+      Number(item.subtotal) > 0 ? item.formatted : "Final total:On Request",
+    );
     references.push({
       name: item.name,
       reference: receipt.reference,
@@ -230,7 +232,7 @@ test("CFA/USD priced, mixed and POR-only bookings save customer currency and ren
       );
     if (item.por) await expect(booking).toContainText("Price on Request");
   }
-  await page.goto("/admin");
+  await page.goto("/admin?q=Dr%20Legacy%20Smoke");
   await page
     .getByRole("link", { name: "View Dr Legacy Smoke", exact: true })
     .click();

@@ -282,9 +282,12 @@ test("Price on Request-only pre-booking submits successfully with optional email
   await expect(
     page.getByRole("heading", { name: "Pre-booking submitted successfully" }),
   ).toBeVisible();
-  await expect(page.getByRole("status").locator("dd").nth(3)).toContainText(
-    "Yes",
-  );
+  await expect(
+    page
+      .getByRole("status")
+      .getByRole("region", { name: "Receipt pricing summary" }),
+  ).toContainText("On Request");
+  await expect(page.getByRole("status")).not.toContainText("0 CFA");
 });
 test("server rejects invented countries and malformed international numbers with field feedback", async ({
   page,

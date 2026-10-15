@@ -95,3 +95,148 @@ select[aria-invalid="true"] {
 .booking-table td:first-child a {
   overflow-wrap: anywhere;
 }
+
+.receipt-print-title {
+  display: none;
+}
+#booking-receipt {
+  overflow-wrap: anywhere;
+}
+.receipt-products {
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.receipt-products th,
+.receipt-products td {
+  padding: 10px 6px;
+  border-bottom: 1px solid #d8e3e4;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.receipt-products th {
+  background: #f1f5f9;
+}
+.receipt-code-col {
+  width: 15%;
+}
+.receipt-name-col {
+  width: 35%;
+}
+.receipt-quantity-col {
+  width: 10%;
+}
+.receipt-unit-col,
+.receipt-line-col {
+  width: 20%;
+}
+@media screen and (max-width: 639px) {
+  .receipt-products,
+  .receipt-products tbody {
+    display: block;
+  }
+  .receipt-products colgroup,
+  .receipt-products thead {
+    display: none;
+  }
+  .receipt-products tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "name name" "code qty" "unit line";
+    gap: 8px 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #d8e3e4;
+  }
+  .receipt-products td {
+    display: block;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+  }
+  .receipt-products td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .receipt-code {
+    grid-area: code;
+  }
+  .receipt-name {
+    grid-area: name;
+  }
+  .receipt-quantity {
+    grid-area: qty;
+  }
+  .receipt-unit {
+    grid-area: unit;
+  }
+  .receipt-line {
+    grid-area: line;
+  }
+}
+@page {
+  size: A4;
+  margin: 14mm;
+}
+@media print {
+  body:has(#booking-receipt) {
+    background: white;
+    color: #111;
+    padding: 0 !important;
+    font-size: 10pt;
+  }
+  body:has(#booking-receipt) > header,
+  body:has(#booking-receipt) > footer,
+  main:has(#booking-receipt) > :not(#booking-receipt),
+  #booking-receipt .no-print,
+  #booking-receipt .receipt-actions {
+    display: none !important;
+  }
+  main:has(#booking-receipt) {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+  }
+  #booking-receipt {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    max-width: none;
+  }
+  .receipt-print-title {
+    display: block;
+    font-size: 17pt;
+  }
+  .receipt-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 20px;
+    margin: 16px 0;
+  }
+  .receipt-details > div,
+  .receipt-summary,
+  .receipt-follow-up {
+    break-inside: avoid;
+  }
+  .receipt-products {
+    width: 100%;
+    font-size: 9pt;
+  }
+  .receipt-products thead {
+    display: table-header-group;
+  }
+  .receipt-products tbody tr {
+    break-inside: avoid;
+  }
+  .receipt-products th,
+  .receipt-products td {
+    padding: 7px 5px;
+  }
+  .receipt-summary {
+    background: white;
+    border-color: #999;
+    margin: 16px 0;
+  }
+}

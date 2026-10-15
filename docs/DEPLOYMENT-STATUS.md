@@ -25,6 +25,10 @@ The booking-alert update adds an empty PostgreSQL delivery queue and a protected
 
 Alerts remain disabled until a Resend account is connected. The owner chose the existing Admin sign-in email as recipient. See [email alert setup](EMAIL-ALERTS.md) for private Railway variable entry and the owner inbox test. No paid email subscription is authorised automatically. `/api/health` also reports `emailAlertsReady` for the queue migration; this readiness flag does not claim the external account is connected or mail reached an inbox.
 
-## Recovery
+## Receipt clarity update (15 October 2026)
+
+Confirmations now distinguish fully priced, mixed and request-only bookings and include saved product lines and browser Print / Save Receipt. The protected admin receipt route uses the same saved booking snapshots. There is no migration or new service/variable; existing prices and records are unchanged. See [receipt behavior and verification](RECEIPTS.md).
+
+## Recovery instructions
 
 An application crash or normal redeployment does not erase the separate PostgreSQL volume or image bucket. The configured website restart policy allows three retries. If a deployment fails, keep the healthy release running or redeploy the last known good release through Railway; do not reset the database. Database rollback is a separate operation and requires a verified backup and migration review. A persistent volume alone is not a backup. CSV/XLSX reports are useful working copies, but are not a complete PostgreSQL restore backup.

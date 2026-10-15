@@ -47,6 +47,14 @@ export default async function BookingDetail({
         </form>
       </div>
       <h1 className="mb-4">Pre-booking details</h1>
+      <p className="mb-4">
+        <a
+          className="button no-underline"
+          href={`/admin/bookings/${encodeURIComponent(b.id)}/receipt`}
+        >
+          Print / Save Receipt
+        </a>
+      </p>
       <article className="card">
         <div className="flex flex-wrap justify-between gap-3">
           <h2>{b.doctorName}</h2>
