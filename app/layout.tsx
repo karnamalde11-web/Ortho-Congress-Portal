@@ -17,7 +17,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </a>
             <div
               aria-label="Product brands"
-              className="grid w-full min-w-0 grid-cols-[1fr_1.2fr_1.55fr] items-center gap-3 sm:w-auto sm:grid-cols-[8.5rem_10.25rem_13rem] sm:gap-6"
+              className="grid w-full min-w-0 grid-cols-2 items-center justify-items-center gap-x-5 gap-y-4 sm:grid-cols-[1fr_1.2fr_1.55fr_1.35fr] lg:w-auto lg:grid-cols-[8.5rem_10.25rem_13rem_11.5rem] lg:gap-x-6"
             >
               <Image
                 src="/brands/actinac.png"
@@ -40,6 +40,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 alt="Actinac Plus SP"
                 width={2103}
                 height={229}
+                unoptimized
+                className="h-auto w-full"
+              />
+              <Image
+                src="/brands/actinac-lp.png"
+                alt="Actinac LP-200"
+                width={1046}
+                height={266}
                 unoptimized
                 className="h-auto w-full"
               />
