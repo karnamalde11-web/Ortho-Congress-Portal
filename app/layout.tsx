@@ -1,4 +1,5 @@
 import "./globals.css";
+import Image from "next/image";
 import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "NM Ortho Pricing & Pre-Booking Portal",
@@ -10,10 +11,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <body className="pb-24 lg:pb-0">
         <header className="border-b bg-white p-5">
-          <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-12 gap-y-4">
             <a href="/" className="font-bold no-underline">
               NM Ortho
             </a>
+            <div
+              aria-label="Product brands"
+              className="grid w-full min-w-0 grid-cols-[1fr_1.2fr_1.55fr] items-center gap-3 sm:w-auto sm:grid-cols-[8.5rem_10.25rem_13rem] sm:gap-6"
+            >
+              <Image
+                src="/brands/actinac.png"
+                alt="Actinac"
+                width={1033}
+                height={158}
+                unoptimized
+                className="h-auto w-full"
+              />
+              <Image
+                src="/brands/actinac-plus.png"
+                alt="Actinac Plus"
+                width={2631}
+                height={371}
+                unoptimized
+                className="h-auto w-full"
+              />
+              <Image
+                src="/brands/actinac-plus-sp.png"
+                alt="Actinac Plus SP"
+                width={2103}
+                height={229}
+                unoptimized
+                className="h-auto w-full"
+              />
+            </div>
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
