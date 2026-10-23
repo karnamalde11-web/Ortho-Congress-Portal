@@ -4,7 +4,7 @@
   "description": "Neu Micromed / Ajanta orthopaedic exhibition pre-booking application",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && tsx scripts/bundle-catalogue-images.ts && next build",
     "start": "next start --hostname 0.0.0.0 -p ${PORT:-3000}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
