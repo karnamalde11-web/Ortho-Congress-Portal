@@ -277,7 +277,7 @@ export default function Catalogue({ products }: { products: Product[] }) {
                 <img
                   loading="lazy"
                   className="mb-4 h-44 w-full object-contain"
-                  src={`/api/images?id=${p.id}`}
+                  src={`/images/products/${encodeURIComponent(p.code)}.webp`}
                   alt={p.name}
                 />
               ) : (
